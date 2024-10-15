@@ -1,7 +1,9 @@
 import requests
 from dotenv import load_dotenv
 from .constants import URL_AUTH, URL_DATA, DATA_COLLECTION
+import zipfile
 import os
+
 
 class Copernicus:
     def __init__(self):
@@ -50,7 +52,7 @@ class Copernicus:
         else:
             return None
 
-    def download(self, product_id, identifier, output_folder="downloads"):
+    def download(self, product_id: int, identifier: str, output_folder="downloads"):
         """
         Download a specific product.
 
@@ -59,7 +61,7 @@ class Copernicus:
         """
         try:
             token = self.authenticate()
-            # Create requests session 
+            # Create requests session
             session = requests.Session()
             # Get access token based on username and password
             session.headers.update({"Authorization": f"Bearer {token}"})
@@ -75,8 +77,26 @@ class Copernicus:
             ) as p:
                 p.write(file.content)
         except Exception as e:
-            raise Exception(
-                f"Error download {identifier}: {e}"
-            )
+            raise Exception(f"Error download {identifier}: {e}")
 
-  
+    def extract_zip(self, zip_name: str, extract_to: str):
+        """
+        Decompress a zip file.
+        :param zip_name: The path to the zip file.
+        :param extract_to: The folder where the decompressed files will be saved.
+        """
+        try:
+            with zipfile.ZipFile(zip_name, "r") as zipf:
+                zipf.extractall(extract_to)
+        except Exception as e:
+            raise Exception(f"Error decompressing {zip_name}: {e}")
+
+    def delete_file(self, file_name: str):
+        """
+        Delete a file.
+        :param file_name: The path to the file to delete.
+        """
+        try:
+            os.remove(file_name)
+        except Exception as e:
+            raise Exception(f"Error deleting {file_name}: {e}")
