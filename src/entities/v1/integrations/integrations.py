@@ -4,6 +4,9 @@ import pandas as pd
 import geopandas as gpd
 import os
 from shapely.geometry import shape
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Integrations:
@@ -32,18 +35,18 @@ class Integrations:
             productDF = gpd.GeoDataFrame(results_transform).set_geometry("geometry")
             # Remove L1C dataset if not needed
             productDF = productDF[~productDF["Name"].str.contains("L1C")]
-            print(f"total L2A tiles found {len(productDF)}")
+            logger.info(f"total L2A tiles found {len(productDF)}")
             productDF["identifier"] = productDF["Name"].str.split(".").str[0]
             totalImages = len(productDF)
             if totalImages == 0:  # If L2A tiles are not available in current query
-                print(f"No tiles found")
+                logger.info(f"No tiles found")
             else:  # If L2A tiles are available in current query
                 # download all tiles from server
                 for index, feat in productDF.iterrows():
-                    print(f"Downloading {index} of {totalImages}")
-                    # copernicus.download(feat["Id"], feat["identifier"], output_folder)
+                    logger.info(f"Downloading {index} of {totalImages}")
+                    copernicus.download(feat["Id"], feat["identifier"], output_folder)
             # Extract all the zip files
-            print("Extracting zip files...")
+            logger.info("Extracting zip files...")
             for file in os.listdir(output_folder):
                 if file.endswith(".zip"):
                     copernicus.extract_zip(
@@ -70,7 +73,7 @@ class Integrations:
                         for filename in os.listdir(images):
                             if filename.endswith(".jp2"):  # Change to .tif if that is the format
                                 file_path = os.path.join(images, filename)
-                                print(f"Processing file: {file_path}")
+                                logger.info(f"Processing file: {file_path}")
                                 # Read the data band
                                 band, profile = processor.read_band(file_path)
                                 # Clean the problematic areas
@@ -85,7 +88,7 @@ class Integrations:
                                 )
                                 processor.save_cleaned_band(band_cleaned, profile, output_path)
         except Exception as e:
-            print(f"An error occurred: {e}")
+            logger.error(f"An error occurred: {e}")
             return 500, {"message": "An error occurred."}
         return 200, {"message": "Images cleaned successfully."}
 
@@ -108,7 +111,7 @@ class Integrations:
                             image_path = os.path.join(subfolder_path, filename)
                             processor.visualize_band(image_path, folder)
         except Exception as e:
-            print(f"An error occurred: {e}")
+            logger.error(f"An error occurred: {e}")
             return 500, {"message": "An error occurred."}
         return 200, {"message": "Images visualized successfully."}
 
@@ -134,6 +137,6 @@ class Integrations:
                                 image_path, lon, lat, window_size, output_path
                             )
         except Exception as e:
-            print(f"An error occurred: {e}")
+            logger.error(f"An error occurred: {e}")
             return 500, {"message": "An error occurred."}
         return 200, {"message": "Images extracted successfully."}

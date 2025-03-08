@@ -1,5 +1,6 @@
-from src.api.integrations.get_clean_images import lambda_handler
-from shapely.geometry import shape
+from src.entities.v1.integrations.integrations import Integrations
 
 if __name__ == "__main__":
-    lambda_handler()
+    integrations = Integrations()
+    status, message = integrations.clean_images()
+    print(status, message)

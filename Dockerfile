@@ -27,5 +27,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 WORKDIR /app
 COPY . /app
-EXPOSE 5678
-CMD ["/bin/bash", "-c", "tail -f /dev/null"]
+EXPOSE 3000
+CMD ["python", "app.py"]

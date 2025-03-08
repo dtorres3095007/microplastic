@@ -86,27 +86,31 @@ class Processor:
         Returns:
         - None
         """
-        with rasterio.open(image_path) as src:
-            # Convert the coordinates to row and column indices
-            row, col = rowcol(src.transform, lon, lat)
+        try:
+            with rasterio.open(image_path) as src:
+                # Convert the coordinates to row and column indices
+                row, col = rowcol(src.transform, lon, lat)
 
-            # Calculate the window to extract
-            half_window = window_size // 2
-            window = (
-                (row - half_window, row + half_window),
-                (col - half_window, col + half_window),
-            )
+                # Calculate the window to extract
+                half_window = window_size // 2
+                window = (
+                    (row - half_window, row + half_window),
+                    (col - half_window, col + half_window),
+                )
 
-            # Read the window from the image
-            band = src.read(1, window=window)  # Read the specified window
-            transform = src.window_transform(window)  # Get the transform for the window
+                # Read the window from the image
+                band = src.read(1, window=window)  # Read the specified window
+                transform = src.window_transform(window)  # Get the transform for the window
 
-            # Save the extracted area as a new image
-            profile = src.profile
-            profile.update(
-                {"height": band.shape[0], "width": band.shape[1], "transform": transform},
-                GDAL_TIFF_INTERNAL_MASK="YES",
-            )
-            with rasterio.Env(GDAL_PAM_ENABLED="NO"):
-                with rasterio.open(output_path, "w", **profile) as dst:
-                    dst.write(band, 1)
+                # Save the extracted area as a new image
+                profile = src.profile
+                profile.update(
+                    {"height": band.shape[0], "width": band.shape[1], "transform": transform},
+                    GDAL_TIFF_INTERNAL_MASK="YES",
+                )
+                with rasterio.Env(GDAL_PAM_ENABLED="NO"):
+                    with rasterio.open(output_path, "w", **profile) as dst:
+                        dst.write(band, 1)
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        print(f"Extracted area saved to: {output_path}")

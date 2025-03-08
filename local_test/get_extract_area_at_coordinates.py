@@ -1,7 +1,9 @@
-from src.api.integrations.get_extract_area_at_coordinates import lambda_handler
+from src.entities.v1.integrations.integrations import Integrations
 
 if __name__ == "__main__":
-    lon = -72.94414177751337
-    lat = 112.094306897221088
-    window_size = 100
-    lambda_handler(lon, lat, window_size)
+    lon = 0.0
+    lat = 0.0
+    window_size = 0
+    integrations = Integrations()
+    status, message = integrations.extract_area_at_coordinates(lon, lat, window_size)
+    print(status, message)

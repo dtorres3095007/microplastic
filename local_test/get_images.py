@@ -1,7 +1,8 @@
-from src.api.integrations.get_images import lambda_handler
 from datetime import date, timedelta
 import json
 from shapely.geometry import shape
+
+from src.entities.v1.integrations.integrations import Integrations
 
 if __name__ == "__main__":
     with open("local_test/map.geojson") as f:
@@ -12,4 +13,7 @@ if __name__ == "__main__":
     end_date = today.strftime("%Y-%m-%d")
     yesterday = today - timedelta(days=1)
     initial_date = yesterday.strftime("%Y-%m-%d")
-    lambda_handler(polygon, initial_date, end_date)
+    integrations = Integrations()
+    status, message = integrations.get_images(polygon, initial_date, end_date)
+    print(status, message)
+
