@@ -1,4 +1,4 @@
-from api.integrationsApi import IntegrationsApi
+from src.api.integrationsApi import IntegrationsApi
 from flask import Flask
 from flask_restful import Api
 import logging
