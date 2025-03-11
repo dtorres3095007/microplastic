@@ -1,5 +1,7 @@
 import requests
 from dotenv import load_dotenv
+
+from src.shared.constants import STATUS_BAD_REQUEST, STATUS_OK
 from .constants import URL_AUTH, URL_DATA, DATA_COLLECTION
 import zipfile
 import os
@@ -47,7 +49,7 @@ class Copernicus:
         """
         search_url = f"{self.url_data}?$filter=Collection/Name eq '{self.data_collection}' and OData.CSC.Intersects(area=geography'SRID=4326;{polygon}') and ContentDate/Start gt {initial_date}T00:00:00.000Z and ContentDate/Start lt {end_date}T00:00:00.000Z&$count=True&$top=1000"
         response = requests.get(search_url)
-        if response.status_code == 200:
+        if response.status_code == STATUS_OK:
             return response.json()
         else:
             return None
@@ -88,8 +90,10 @@ class Copernicus:
         try:
             with zipfile.ZipFile(zip_name, "r") as zipf:
                 zipf.extractall(extract_to)
+                return STATUS_OK, {"message": f"Extracted {zip_name} to {extract_to}"}
         except Exception as e:
-            raise Exception(f"Error decompressing {zip_name}: {e}")
+            return STATUS_BAD_REQUEST, {"message": f"Error extracting {zip}: {e}"}
+            
 
     def delete_file(self, file_name: str):
         """

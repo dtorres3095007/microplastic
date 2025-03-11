@@ -1,4 +1,5 @@
 from flask_restful import Resource
+from src.shared.constants import FOLDERS_DOWNLOAD, STATUS_BAD_REQUEST, STATUS_OK
 from src.entities.v1.integrations.integrations import Integrations
 import logging
 import json
@@ -21,20 +22,20 @@ class IntegrationsApi(Resource):
             polygon = shape(geom).wkt
             logger.info("----- Request post IntegrationsApi -----")
             logger.info(f"initial_date : {initial_date} - end_date : {end_date}")
-            integrations = Integrations()
+            integrations = Integrations(FOLDERS_DOWNLOAD)
             status, message = integrations.get_images(polygon, initial_date, end_date)
 
-            if status != 200:
+            if status != STATUS_OK:
                 logger.error(f"Error in get_images: {message}")
                 return message, status
             
             status, message = integrations.clean_images()
 
-            if status != 200:
+            if status != STATUS_OK:
                 logger.error(f"Error in clean_images: {message}")
 
-            return {"message" : "Images downloaded and cleaned successfully"}, 200
+            return {"message" : "Images downloaded and cleaned successfully"}, STATUS_OK
 
         except Exception as e:
             logger.error(f"Error in post IntegrationsApi: {e}")
-            return {"message": f"images download failed : {e}"}, 400
+            return {"message": f"images download failed : {e}"}, STATUS_BAD_REQUEST

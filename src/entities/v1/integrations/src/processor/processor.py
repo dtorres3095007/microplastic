@@ -5,6 +5,7 @@ from rasterio.plot import show
 import matplotlib.pyplot as plt
 import rasterio.env
 from rasterio.transform import rowcol
+from rasterio.warp import calculate_default_transform, reproject, Resampling
 
 
 class Processor:
@@ -114,3 +115,31 @@ class Processor:
         except Exception as e:
             print(f"An error occurred: {e}")
         print(f"Extracted area saved to: {output_path}")
+
+    def rescale_band(self, band, profile, target_resolution):
+        """Rescale the band to the target resolution (10m or 20m)."""
+        original_transform = profile["transform"]
+        left, bottom, right, top = rasterio.transform.array_bounds(
+            profile["height"], profile["width"], profile["transform"]
+        )
+
+        dst_transform, width, height = calculate_default_transform(
+            profile["crs"], profile["crs"], width=profile["width"], height=profile["height"],
+            left=left, bottom=bottom, right=right, top=top, resolution=target_resolution
+        )
+
+        
+        profile.update(transform=dst_transform, width=width, height=height)
+
+        rescaled_band = np.empty((height, width), dtype=rasterio.uint16)
+        reproject(
+            source=band,
+            destination=rescaled_band,
+            src_transform=original_transform,
+            src_crs=profile["crs"],
+            dst_transform=dst_transform,
+            dst_crs=profile["crs"],
+            resampling=Resampling.bilinear
+        )
+
+        return rescaled_band, profile
