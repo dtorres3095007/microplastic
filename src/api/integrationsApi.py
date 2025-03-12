@@ -1,5 +1,5 @@
 from flask_restful import Resource
-from src.shared.constants import FOLDERS_DOWNLOAD, STATUS_BAD_REQUEST, STATUS_OK
+from src.shared.constants import FOLDERS_DOWNLOAD_NAMES, STATUS_BAD_REQUEST, STATUS_OK
 from src.entities.v1.integrations.integrations import Integrations
 import logging
 import json
@@ -22,7 +22,7 @@ class IntegrationsApi(Resource):
             polygon = shape(geom).wkt
             logger.info("----- Request post IntegrationsApi -----")
             logger.info(f"initial_date : {initial_date} - end_date : {end_date}")
-            integrations = Integrations(FOLDERS_DOWNLOAD)
+            integrations = Integrations(FOLDERS_DOWNLOAD_NAMES)
             status, message = integrations.get_images(polygon, initial_date, end_date)
 
             if status != STATUS_OK:

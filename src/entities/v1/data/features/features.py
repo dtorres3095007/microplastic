@@ -1,0 +1,114 @@
+import numpy as np
+import rasterio
+import os
+from src.shared.constants import STATUS_BAD_REQUEST, STATUS_INTERNAL_SERVER_ERROR, STATUS_OK
+
+
+class Feature:
+    def __init__(self, path_bands, output_path):
+        """
+        Initialize the Feature class.
+        :param bands: Dictionary containing band file paths.
+        :param output_path: Path to store the processed results.
+        """
+        self.path_bands = path_bands
+        self.output_path = output_path
+        self.bands = {}
+
+    def open_bands(self):
+        """
+        Open the bands using rasterio.
+        """
+        USING_BANDS_NAMES = ["RED", "GREEN", "NIR_10m", "SWIR1", "REDEDGE1"]
+
+        for band_name, band_path in self.path_bands.items():
+            if band_name not in USING_BANDS_NAMES:
+                continue
+            try:
+                with rasterio.open(band_path) as src:
+                    band = src.read(1).astype(np.float32)
+                    self.bands[band_name] = band
+            except Exception as e:
+                print(f"Error opening {band_name}: {str(e)}")
+
+    def calculate_ndvi(self):
+        try:
+            red = self.bands.get("RED")
+            nir = self.bands.get("NIR_10m")
+            if red is None or nir is None:
+                return STATUS_BAD_REQUEST, {"message": "Missing required bands for NDVI."}
+            
+            ndvi = (nir - red) / (nir + red + 1e-10)
+            status, message = self.save_feature(ndvi, "NDVI.tif")
+            return status, message
+        except Exception as e:
+            return STATUS_INTERNAL_SERVER_ERROR, {"message": f"Error in NDVI: {str(e)}"}
+
+    def calculate_ndwi(self):
+        try:
+            green = self.bands.get("GREEN")
+            nir = self.bands.get("NIR_10m")
+            if green is None or nir is None:
+                return STATUS_BAD_REQUEST, {"message": "Missing required bands for NDWI."}
+            
+            ndwi = (green - nir) / (green + nir + 1e-10)
+            status, message = self.save_feature(ndwi, "NDWI.tif")
+            return status, message
+        except Exception as e:
+            return STATUS_INTERNAL_SERVER_ERROR, {"message": f"Error in NDWI: {str(e)}"}
+
+    def calculate_ndci(self):
+        try:
+            rededge1 = self.bands.get("REDEDGE1")
+            red = self.bands.get("RED")
+            if rededge1 is None or red is None:
+                return STATUS_BAD_REQUEST, {"message": "Missing required bands for NDCI."}
+            
+            ndci = (rededge1 - red) / (rededge1 + red + 1e-10)
+            status, message = self.save_feature(ndci, "NDCI.tif")
+            return status, message
+        except Exception as e:
+            return STATUS_INTERNAL_SERVER_ERROR, {"message": f"Error in NDCI: {str(e)}"}
+
+    def calculate_fdi(self):
+        try:
+            swir1 = self.bands.get("SWIR1")
+            nir = self.bands.get("NIR_10m")
+            if swir1 is None or nir is None:
+                return STATUS_BAD_REQUEST, {"message": "Missing required bands for FDI."}
+            
+            fdi = swir1 - nir
+            status, message = self.save_feature(fdi, "FDI.tif")
+            return status, message
+        except Exception as e:
+            return STATUS_INTERNAL_SERVER_ERROR, {"message": f"Error in FDI: {str(e)}"}
+
+    def calculate_ndpi(self):
+        try:
+            red = self.bands.get("RED")
+            swir1 = self.bands.get("SWIR1")
+            if red is None or swir1 is None:
+                return STATUS_BAD_REQUEST, {"message": "Missing required bands for NDPI."}
+            
+            ndpi = (red - swir1) / (red + swir1 + 1e-10)
+            status, message = self.save_feature(ndpi, "NDPI.tif")
+            return status, message
+        except Exception as e:
+            return STATUS_INTERNAL_SERVER_ERROR, {"message": f"Error in NDPI: {str(e)}"}
+
+    def save_feature(self, feature_array, filename):
+        try:
+            output_path = os.path.join(self.output_path, filename)
+            
+            sample_band = next(iter(self.path_bands.values()))
+            
+            with rasterio.open(sample_band) as src:
+                profile = src.profile
+                profile.update(dtype=rasterio.uint16, count=1)
+            
+            with rasterio.open(output_path, "w", **profile) as dst:
+                dst.write(feature_array, 1)
+            
+            return STATUS_OK, {"message": f"Feature {filename} saved."}
+        except Exception as e:
+            return STATUS_INTERNAL_SERVER_ERROR, {"message": f"Error saving feature: {str(e)}"}

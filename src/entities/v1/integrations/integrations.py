@@ -1,3 +1,4 @@
+from src.shared.utils import get_band_name
 from src.entities.v1.integrations.src.copernicus.copernicus import Copernicus
 from src.entities.v1.integrations.src.processor.processor import Processor
 from src.shared.constants import R10_BANDS, R10_FOLDER, R20_BANDS, R20_FOLDER, STATUS_INTERNAL_SERVER_ERROR, STATUS_OK
@@ -103,9 +104,10 @@ class Integrations:
                                     folder = os.path.join(output_dir, subfolder)
                                     if not os.path.exists(folder):
                                         os.makedirs(folder)
+                                    band_name = get_band_name(filename)
                                     output_path = os.path.join(
                                         folder,
-                                        filename.replace(".jp2", ".tif"),
+                                        f"{band_name}.tif",
                                     )
                                     processor.save_cleaned_band(band_cleaned, profile, output_path)
         except Exception as e:

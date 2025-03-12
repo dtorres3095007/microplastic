@@ -2,7 +2,7 @@ from datetime import date, timedelta
 import json
 from shapely.geometry import shape
 
-from src.shared.constants import FOLDERS_DOWNLOAD
+from src.shared.constants import FOLDERS_DOWNLOAD_NAMES
 from src.entities.v1.integrations.integrations import Integrations
 
 if __name__ == "__main__":
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     end_date = today.strftime("%Y-%m-%d")
     yesterday = today - timedelta(days=1)
     initial_date = yesterday.strftime("%Y-%m-%d")
-    integrations = Integrations(FOLDERS_DOWNLOAD)
+    integrations = Integrations(FOLDERS_DOWNLOAD_NAMES)
     status, message = integrations.get_images(polygon, initial_date, end_date)
     print(status, message)
 

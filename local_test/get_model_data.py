@@ -6,6 +6,9 @@ if __name__ == "__main__":
     logger = setup_logger()
     data = Data()
     # status, message = data.get_model_images()
-    status, message = data.clean_model_images()
+    # print(status, message)
+    # status, message = data.clean_model_images()
+    # print(status, message)
+    status, message = data.calculate_features()
     print(status, message)
 
