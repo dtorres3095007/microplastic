@@ -9,6 +9,7 @@ if __name__ == "__main__":
     # print(status, message)
     # status, message = data.clean_model_images()
     # print(status, message)
-    status, message = data.calculate_features()
+    # status, message = data.calculate_features()
+    # print(status, message)
+    status, message = data.create_dataset()
     print(status, message)
-

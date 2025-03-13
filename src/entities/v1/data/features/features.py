@@ -1,7 +1,7 @@
 import numpy as np
 import rasterio
 import os
-from src.shared.constants import STATUS_BAD_REQUEST, STATUS_INTERNAL_SERVER_ERROR, STATUS_OK
+from src.shared.constants import FEATURE_FDI, FEATURE_NDCI, FEATURE_NDPI, FEATURE_NDWI, FEATURE_NDVI, STATUS_BAD_REQUEST, STATUS_INTERNAL_SERVER_ERROR, STATUS_OK
 
 
 class Feature:
@@ -32,6 +32,9 @@ class Feature:
                 print(f"Error opening {band_name}: {str(e)}")
 
     def calculate_ndvi(self):
+        """
+        Calculate the Normalized Difference Vegetation Index (NDVI).
+        """
         try:
             red = self.bands.get("RED")
             nir = self.bands.get("NIR_10m")
@@ -39,12 +42,15 @@ class Feature:
                 return STATUS_BAD_REQUEST, {"message": "Missing required bands for NDVI."}
             
             ndvi = (nir - red) / (nir + red + 1e-10)
-            status, message = self.save_feature(ndvi, "NDVI.tif")
+            status, message = self.save_feature(ndvi, f"{FEATURE_NDVI}.tif")
             return status, message
         except Exception as e:
             return STATUS_INTERNAL_SERVER_ERROR, {"message": f"Error in NDVI: {str(e)}"}
 
     def calculate_ndwi(self):
+        """
+        Calculate Normalized Difference Water Index (NDWI).
+        """
         try:
             green = self.bands.get("GREEN")
             nir = self.bands.get("NIR_10m")
@@ -52,12 +58,15 @@ class Feature:
                 return STATUS_BAD_REQUEST, {"message": "Missing required bands for NDWI."}
             
             ndwi = (green - nir) / (green + nir + 1e-10)
-            status, message = self.save_feature(ndwi, "NDWI.tif")
+            status, message = self.save_feature(ndwi, f"{FEATURE_NDWI}.tif")
             return status, message
         except Exception as e:
             return STATUS_INTERNAL_SERVER_ERROR, {"message": f"Error in NDWI: {str(e)}"}
 
     def calculate_ndci(self):
+        """
+        Calculate Normalized Difference Chlorophyll Index (NDCI).
+        """
         try:
             rededge1 = self.bands.get("REDEDGE1")
             red = self.bands.get("RED")
@@ -65,12 +74,15 @@ class Feature:
                 return STATUS_BAD_REQUEST, {"message": "Missing required bands for NDCI."}
             
             ndci = (rededge1 - red) / (rededge1 + red + 1e-10)
-            status, message = self.save_feature(ndci, "NDCI.tif")
+            status, message = self.save_feature(ndci, f"{FEATURE_NDCI}.tif")
             return status, message
         except Exception as e:
             return STATUS_INTERNAL_SERVER_ERROR, {"message": f"Error in NDCI: {str(e)}"}
 
     def calculate_fdi(self):
+        """
+        Calculate Fire Detection Index (FDI).
+        """
         try:
             swir1 = self.bands.get("SWIR1")
             nir = self.bands.get("NIR_10m")
@@ -78,12 +90,14 @@ class Feature:
                 return STATUS_BAD_REQUEST, {"message": "Missing required bands for FDI."}
             
             fdi = swir1 - nir
-            status, message = self.save_feature(fdi, "FDI.tif")
+            status, message = self.save_feature(fdi, f"{FEATURE_FDI}.tif")
             return status, message
         except Exception as e:
             return STATUS_INTERNAL_SERVER_ERROR, {"message": f"Error in FDI: {str(e)}"}
 
     def calculate_ndpi(self):
+        """
+        Calculate Normalized Difference Pigment Index (NDPI)."""
         try:
             red = self.bands.get("RED")
             swir1 = self.bands.get("SWIR1")
@@ -91,7 +105,7 @@ class Feature:
                 return STATUS_BAD_REQUEST, {"message": "Missing required bands for NDPI."}
             
             ndpi = (red - swir1) / (red + swir1 + 1e-10)
-            status, message = self.save_feature(ndpi, "NDPI.tif")
+            status, message = self.save_feature(ndpi, f"{FEATURE_NDPI}.tif")
             return status, message
         except Exception as e:
             return STATUS_INTERNAL_SERVER_ERROR, {"message": f"Error in NDPI: {str(e)}"}
@@ -105,9 +119,11 @@ class Feature:
             with rasterio.open(sample_band) as src:
                 profile = src.profile
                 profile.update(dtype=rasterio.uint16, count=1)
-            
+
+            scaled_feature = ((feature_array + 1) * 32767.5).astype(np.uint16)
+
             with rasterio.open(output_path, "w", **profile) as dst:
-                dst.write(feature_array, 1)
+                dst.write(scaled_feature, 1)
             
             return STATUS_OK, {"message": f"Feature {filename} saved."}
         except Exception as e:

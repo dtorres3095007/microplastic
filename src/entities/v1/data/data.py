@@ -4,10 +4,12 @@ from shapely.geometry import shape
 import logging
 import json
 from src.entities.v1.data.features.features import Feature
-from src.shared.constants import DATES_MODEL_LIST, FOLDERS_MODEL_NAMES, POLYGONS_MODEL_LIST, STATUS_BAD_REQUEST, STATUS_OK
+from src.shared.constants import DATES_MODEL_LIST, FEATURES_LIST, FOLDERS_MODEL_NAMES, MICROPLASTIC_DATA, POLYGONS_MODEL_LIST, STATUS_BAD_REQUEST, STATUS_OK
 from src.entities.v1.integrations.integrations import Integrations
 import os
-
+from datetime import datetime, timedelta
+import rasterio
+from rasterio.transform import rowcol
 logger = logging.getLogger(__name__)
 
 
@@ -34,7 +36,7 @@ class Data:
                 logger.info(f"Getting images for dates {initial_date} - {end_date}")
                 folder_model = copy.deepcopy(FOLDERS_MODEL_NAMES)
                 folder_main = folder_model.get("MAIN")
-                sub_folder = polygon_name.split(".json")[0]
+                sub_folder = polygon_name
                 folder_model["MAIN"] = folder_main + [sub_folder]
 
                 integrations = Integrations(folder_model)
@@ -53,7 +55,7 @@ class Data:
             logger.info(f"Cleaning images for polygon {polygon_name}")
             folder_model = copy.deepcopy(FOLDERS_MODEL_NAMES)
             folder_main = folder_model.get("MAIN")
-            sub_folder = polygon_name.split(".json")[0]
+            sub_folder = polygon_name
             folder_model["MAIN"] = folder_main + [sub_folder]
 
             integrations = Integrations(folder_model)
@@ -107,4 +109,61 @@ class Data:
         except Exception as e:
             logger.error(f"Error in calculate_features: {str(e)}")
             logger.info("----------------- Features calculated Error-----------------") 
+            return STATUS_BAD_REQUEST, {"message": str(e)}
+
+    def create_dataset(self) -> tuple:
+        """
+        create dataset for the model polygons.
+        """
+        try:
+                                    
+            logger.info("----------------- Create dataset for model polygons -----------------")
+            base_dir = os.path.join(os.getcwd(), *FOLDERS_MODEL_NAMES["MAIN"])
+            dataset = copy.deepcopy(MICROPLASTIC_DATA)
+            for data in dataset:
+                date = data.get("date")
+                dataset_date = datetime.strptime(date, "%Y-%m-%d")
+                folder = data.get("folder")
+                latitude = data.get("latitude")
+                longitude = data.get("longitude")
+                polygon_path = os.path.join(base_dir, folder)
+                fetures_path = os.path.join(polygon_path, FOLDERS_MODEL_NAMES["FEATURES"])
+                logger.info(f"Processing polygon: {folder} - {date}")
+
+                if not os.path.isdir(fetures_path):
+                    logger.error(f"Processing polygon: {folder} - {date} - Error: fetures_path does not exist")
+                    continue 
+
+                for band_indicator_folder in os.listdir(fetures_path):
+                    date_str = band_indicator_folder.split("_")[2][:8]
+                    band_date = datetime.strptime(date_str, "%Y%m%d")
+                    lower_bound = dataset_date - timedelta(days=3)
+                    upper_bound = dataset_date + timedelta(days=3)
+
+                    # Verificar si la fecha está dentro del rango de ±3 días
+                    if lower_bound <= band_date <= upper_bound:
+                        logger.info(f"Band {band_indicator_folder} is within range for {folder} - {date}")
+
+                        band_path = os.path.join(fetures_path, band_indicator_folder)
+                        for indicator_name in FEATURES_LIST:
+                            indicator_file = os.path.join(band_path, f"{indicator_name}.tif")
+                            if not os.path.isfile(indicator_file):
+                                data[indicator_name] = None
+                                logger.error(f"Indicator file {indicator_file} does not exist")
+                                continue
+
+                            with rasterio.open(indicator_file) as datasetIndicator:
+                                # Convertir latitud y longitud a coordenadas de píxel
+                                row, col = map(int, rowcol(datasetIndicator.transform, longitude, latitude))
+
+                                # Leer el valor del píxel en esa ubicación
+                                raw_value = datasetIndicator.read(1)[row, col]
+                                value = (raw_value / 32767.5) - 1
+                                # Guardar el valor en el datasetIndicator
+                                data[indicator_name] = value
+                                logger.info(f"Extracted {indicator_name}: {value} for {folder} and {date} and {band_indicator_folder}")
+            return STATUS_OK, {"message": "Create Dataset."}
+        except Exception as e:
+            logger.error(f"Error in create_dataset: {str(e)}")
+            logger.info("----------------- Create dataset Error-----------------") 
             return STATUS_BAD_REQUEST, {"message": str(e)}
