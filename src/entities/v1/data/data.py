@@ -3,8 +3,10 @@ import copy
 from shapely.geometry import shape
 import logging
 import json
-from src.entities.v1.data.features.features import Feature
-from src.shared.constants import DATES_MODEL_LIST, FEATURES_LIST, FOLDERS_MODEL_NAMES, MICROPLASTIC_DATA, POLYGONS_MODEL_LIST, STATUS_BAD_REQUEST, STATUS_OK
+from src.entities.v1.data.src.models.models import Models
+from src.shared.utils import save_dataset_to_csv
+from src.entities.v1.data.src.features.features import Feature
+from src.shared.constants import DATES_MODEL_LIST, FEATURES_LIST, FOLDER_POLYGONS, FOLDERS_DATASET_NAMES, FOLDERS_MODEL_NAMES, MICROPLASTIC_DATA, POLYGONS_MODEL_LIST, STATUS_BAD_REQUEST, STATUS_OK
 from src.entities.v1.integrations.integrations import Integrations
 import os
 from datetime import datetime, timedelta
@@ -26,7 +28,9 @@ class Data:
         logger.info("----------------- Getting images for model polygons -----------------")
         for polygon_name in POLYGONS_MODEL_LIST:
             logger.info(f"Getting images for polygon {polygon_name}")
-            with open(f"src/shared/model_polygons/{polygon_name}") as f:
+            base_dir = os.path.join(os.getcwd(), *FOLDER_POLYGONS, f"{polygon_name}.json")
+
+            with open(base_dir) as f:
                     geojson_data = json.load(f)
             geom = geojson_data["features"][0]["geometry"]
             polygon = shape(geom).wkt
@@ -91,19 +95,26 @@ class Data:
                         os.makedirs(output_folder, exist_ok=True)
                         logger.info("Calculating features")
                         feature = Feature(band_files, output_folder)
-                        logger.info("Opening bands")
-                        feature.open_bands()
-                        logger.info("Band opened")
+                        status, message= feature.open_bands()
+                        if status != STATUS_OK:
+                            logger.error(f"Error in open_bands: {message}")
+                            return status, message
+                        
                         status, message = feature.calculate_ndvi()
-                        logger.info(f"calculate_ndvi Status: {status}, Message: {message}")
+                        if status != STATUS_OK:
+                            logger.error(f"Error in calculate_ndvi: {message}")
                         status, message = feature.calculate_ndwi()
-                        logger.info(f"calculate_ndwi Status: {status}, Message: {message}")
+                        if status != STATUS_OK:
+                            logger.error(f"Error in calculate_ndwi: {message}")
                         status, message = feature.calculate_ndci()
-                        logger.info(f"calculate_ndci Status: {status}, Message: {message}")
+                        if status != STATUS_OK:
+                            logger.error(f"Error in calculate_ndci: {message}")
                         status, message = feature.calculate_fdi()
-                        logger.info(f"calculate_fdi Status: {status}, Message: {message}")
+                        if status != STATUS_OK:
+                            logger.error(f"Error in calculate_fdi: {message}")
                         status, message = feature.calculate_ndpi()
-                        logger.info(f"calculate_ndpi Status: {status}, Message: {message}")
+                        if status != STATUS_OK:
+                            logger.error(f"Error in calculate_ndpi: {message}")
             logger.info("----------------- Features calculated -----------------")       
             return STATUS_OK, {"message": "Features calculated."}
         except Exception as e:
@@ -127,24 +138,23 @@ class Data:
                 latitude = data.get("latitude")
                 longitude = data.get("longitude")
                 polygon_path = os.path.join(base_dir, folder)
-                fetures_path = os.path.join(polygon_path, FOLDERS_MODEL_NAMES["FEATURES"])
+                features_path = os.path.join(polygon_path, FOLDERS_MODEL_NAMES["FEATURES"])
                 logger.info(f"Processing polygon: {folder} - {date}")
 
-                if not os.path.isdir(fetures_path):
-                    logger.error(f"Processing polygon: {folder} - {date} - Error: fetures_path does not exist")
+                if not os.path.isdir(features_path):
+                    logger.error(f"Processing polygon: {folder} - {date} - Error: features_path does not exist")
                     continue 
 
-                for band_indicator_folder in os.listdir(fetures_path):
+                for band_indicator_folder in os.listdir(features_path):
                     date_str = band_indicator_folder.split("_")[2][:8]
                     band_date = datetime.strptime(date_str, "%Y%m%d")
                     lower_bound = dataset_date - timedelta(days=3)
                     upper_bound = dataset_date + timedelta(days=3)
 
-                    # Verificar si la fecha está dentro del rango de ±3 días
                     if lower_bound <= band_date <= upper_bound:
                         logger.info(f"Band {band_indicator_folder} is within range for {folder} - {date}")
 
-                        band_path = os.path.join(fetures_path, band_indicator_folder)
+                        band_path = os.path.join(features_path, band_indicator_folder)
                         for indicator_name in FEATURES_LIST:
                             indicator_file = os.path.join(band_path, f"{indicator_name}.tif")
                             if not os.path.isfile(indicator_file):
@@ -153,17 +163,72 @@ class Data:
                                 continue
 
                             with rasterio.open(indicator_file) as datasetIndicator:
-                                # Convertir latitud y longitud a coordenadas de píxel
                                 row, col = map(int, rowcol(datasetIndicator.transform, longitude, latitude))
-
-                                # Leer el valor del píxel en esa ubicación
                                 raw_value = datasetIndicator.read(1)[row, col]
                                 value = (raw_value / 32767.5) - 1
-                                # Guardar el valor en el datasetIndicator
                                 data[indicator_name] = value
                                 logger.info(f"Extracted {indicator_name}: {value} for {folder} and {date} and {band_indicator_folder}")
+            
+            dataset_path = os.path.join(*FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["DATASET"])
+
+            status, message = save_dataset_to_csv(dataset,dataset_path)
+            if not status:
+                logger.error(f"Error in save_dataset_to_csv: {message}")
+                return STATUS_BAD_REQUEST, {"message": message}
+            
+            logger.info("----------------- Dataset created -----------------")
             return STATUS_OK, {"message": "Create Dataset."}
         except Exception as e:
             logger.error(f"Error in create_dataset: {str(e)}")
             logger.info("----------------- Create dataset Error-----------------") 
+            return STATUS_BAD_REQUEST, {"message": str(e)}
+    
+    def train_models(self) -> tuple:
+        """
+        Train models for the dataset.
+        """
+        try:
+            logger.info("----------------- Training models -----------------")
+            dataset_path = os.path.join(*FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["DATASET"], "microplastics.csv")
+            models_path = os.path.join(*FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["MODELS"])
+            # Initialize model class
+            model_trainer = Models(dataset_path)
+
+            # Load data
+            status, response = model_trainer.load_data()
+            if status != STATUS_OK:
+                logger.error(f"Error in load_data: {response}")
+                return status, response
+            df = response
+
+            # Split data
+            status, response = model_trainer.split_data(df)
+            if status != STATUS_OK:
+                logger.error(f"Error in split_data: {response}")
+                return status, response
+            X_train, X_test, y_train, y_test = response
+
+            # Train models
+            status, response = model_trainer.train_models(X_train, y_train)
+            if status != STATUS_OK:
+                logger.error(f"Error in train_models: {response}")
+                return status, response
+
+            # Evaluate models
+            status, response = model_trainer.evaluate_models(X_test, y_test)
+            if status != STATUS_OK:
+                logger.error(f"Error in evaluate_models: {response}")
+                return status, response
+
+            # Save models
+            status, response = model_trainer.save_models(models_path)
+            if status != STATUS_OK:
+                logger.error(f"Error in save_models: {response}")
+                return status, response
+
+            logger.info("----------------- Models trained -----------------")
+            return STATUS_OK, {"message": "Models trained."}
+        except Exception as e:
+            logger.error(f"Error in train_models: {str(e)}")
+            logger.info("----------------- Training models Error-----------------") 
             return STATUS_BAD_REQUEST, {"message": str(e)}

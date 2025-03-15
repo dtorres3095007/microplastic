@@ -53,12 +53,20 @@ FOLDERS_DOWNLOAD_NAMES = {
     "EXTRACTED": "extracted",
     "EXTRACTED_AREA": "extracted_area",
 }
+
+FOLDER_POLYGONS = ["data","polygons"]
 FOLDERS_MODEL_NAMES = {
-    "MAIN": ["src", "shared", "model_images"],
-    "ZIP": "zip",
-    "CLEANED": "cleaned",
+    "MAIN": ["data","images"],
+    "ZIP": "download",
+    "CLEANED": "processed",
     "EXTRACTED": "extracted",
-    "FEATURES": "features",
+    "FEATURES": "features"
+  }
+
+FOLDERS_DATASET_NAMES = {
+    "MAIN": ["data", "train"],
+    "DATASET": "dataset",
+    "MODELS": "models",
 }
 
 MICROPLASTIC_DATA = [

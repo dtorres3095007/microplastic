@@ -20,7 +20,8 @@ class Feature:
         Open the bands using rasterio.
         """
         USING_BANDS_NAMES = ["RED", "GREEN", "NIR_10m", "SWIR1", "REDEDGE1"]
-
+        status = STATUS_OK
+        message = ""
         for band_name, band_path in self.path_bands.items():
             if band_name not in USING_BANDS_NAMES:
                 continue
@@ -29,7 +30,10 @@ class Feature:
                     band = src.read(1).astype(np.float32)
                     self.bands[band_name] = band
             except Exception as e:
-                print(f"Error opening {band_name}: {str(e)}")
+                status = STATUS_INTERNAL_SERVER_ERROR
+                message = f"Error opening band {band_name}: {str(e)}"
+        
+        return status, message
 
     def calculate_ndvi(self):
         """

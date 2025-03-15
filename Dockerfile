@@ -1,5 +1,5 @@
 # Utiliza la imagen base de Python slim
-FROM python:3.10-slim
+FROM python:3.8-slim
 
 # Instala las dependencias necesarias incluyendo GDAL y otras librerías necesarias para compilar extensiones
 RUN apt-get update && apt-get install -y \
