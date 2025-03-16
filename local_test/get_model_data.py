@@ -1,5 +1,5 @@
-from src.entities.v1.data.data import Data
-from local_test.config import setup_logger
+from src.api.data.data import Data
+from config import setup_logger
 
 
 if __name__ == "__main__":
@@ -15,5 +15,5 @@ if __name__ == "__main__":
     # print(status, message)
     # status, message = data.train_models()
     # print(status, message)
-    status, message = data.evaluate_models()
-    print(status, message)
+    # status, message = data.evaluate_models()
+    # print(status, message)

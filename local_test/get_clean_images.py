@@ -1,4 +1,4 @@
-from src.entities.v1.integrations.integrations import Integrations
+from src.api.integrations.integrations import Integrations
 
 if __name__ == "__main__":
     integrations = Integrations()

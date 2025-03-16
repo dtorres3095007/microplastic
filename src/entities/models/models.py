@@ -53,7 +53,7 @@ class Models:
             X_train_scaled = self.scaler.transform(X_train)
             X_test_scaled = self.scaler.transform(X_test)
 
-            return STATUS_OK, (X_train_scaled, X_test_scaled, y_train, y_test, y)
+            return STATUS_OK, (X_train_scaled, X_test_scaled, y_train, y_test)
         except Exception as e:
             return STATUS_BAD_REQUEST, {"message": str(e)}
 

@@ -1,6 +1,6 @@
 from flask_restful import Resource
 from src.shared.constants import FOLDERS_DOWNLOAD_NAMES, STATUS_BAD_REQUEST, STATUS_OK
-from src.entities.v1.integrations.integrations import Integrations
+from src.api.integrations.integrations import Integrations
 import logging
 import json
 from shapely.geometry import shape
@@ -10,7 +10,7 @@ import base64
 logger = logging.getLogger(__name__)
 
 
-class IntegrationsApi(Resource):
+class IntegrationsRequest(Resource):
     def post(self):
         try:
             data = request.get_json()

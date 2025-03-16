@@ -1,6 +1,6 @@
 
 import os
-from src.entities.v1.integrations.integrations import Integrations
+from src.api.integrations.integrations import Integrations
 
 if __name__ == "__main__":
     input_dir = os.path.join(os.getcwd(), "downloads", "extracted_area")

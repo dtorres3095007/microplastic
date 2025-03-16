@@ -3,9 +3,9 @@ import copy
 from shapely.geometry import shape
 import logging
 import json
-from src.entities.v1.data.src.models.models import Models
+from src.entities.models.models import Models
 from src.shared.utils import save_dataset_to_csv
-from src.entities.v1.data.src.features.features import Feature
+from src.entities.features.features import Feature
 from src.shared.constants import (
     DATES_MODEL_LIST,
     FEATURE_FDI,
@@ -22,7 +22,7 @@ from src.shared.constants import (
     STATUS_BAD_REQUEST,
     STATUS_OK,
 )
-from src.entities.v1.integrations.integrations import Integrations
+from src.api.integrations.integrations import Integrations
 import os
 from datetime import datetime, timedelta
 import rasterio
@@ -42,6 +42,7 @@ class Data:
         """
         Get images for the model polygons and dates.
         """
+        logger.info("Getting images")
         for polygon_name in POLYGONS_MODEL_LIST:
             logger.info(f"Getting images for polygon {polygon_name}")
             base_dir = os.path.join(
@@ -69,12 +70,14 @@ class Data:
                     logger.error(
                         f"Error in getting images for polygon {polygon} and dates {initial_date} - {end_date}: {message}"
                     )
+        logger.info("Images downloaded")
         return STATUS_OK, {"message": "Images downloaded."}
 
     def clean_model_images(self) -> tuple:
         """
         Clean images for the model polygons.
         """
+        logger.info("Cleaning images")
         for polygon_name in POLYGONS_MODEL_LIST:
             logger.info(f"Cleaning images for polygon {polygon_name}")
             folder_model = copy.deepcopy(FOLDERS_MODEL_NAMES)
@@ -88,6 +91,7 @@ class Data:
                 logger.error(
                     f"Error in cleaning images for polygon {polygon_name}: {message}"
                 )
+        logger.info("Images cleaned")
         return STATUS_OK, {"message": "Images cleaned."}
 
     def calculate_features(self) -> tuple:
@@ -95,6 +99,7 @@ class Data:
         Calculate features for the model polygons.
         """
         try:
+            logger.info("Calculating features")
             base_dir = os.path.join(os.getcwd(), *FOLDERS_MODEL_NAMES["MAIN"])
             for polygon_folder in os.listdir(base_dir):
                 polygon_path = os.path.join(base_dir, polygon_folder)
@@ -143,6 +148,7 @@ class Data:
                         status, message = feature.calculate_ndpi()
                         if status != STATUS_OK:
                             logger.error(f"Error in calculate_ndpi: {message}")
+            logger.info("Features calculated")
             return STATUS_OK, {"message": "Features calculated."}
         except Exception as e:
             logger.error(f"Error in calculate_features: {str(e)}")
@@ -153,6 +159,7 @@ class Data:
         create dataset for the model polygons.
         """
         try:
+            logger.info("Creating dataset")
             base_dir = os.path.join(os.getcwd(), *FOLDERS_MODEL_NAMES["MAIN"])
             dataset = copy.deepcopy(MICROPLASTIC_DATA)
             for data in dataset:
@@ -241,7 +248,7 @@ class Data:
             if not status:
                 logger.error(f"Error in save_dataset_to_csv: {message}")
                 return STATUS_BAD_REQUEST, {"message": message}
-
+            logger.info("Dataset created")
             return STATUS_OK, {"message": "Create Dataset."}
         except Exception as e:
             logger.error(f"Error in create_dataset: {str(e)}")
@@ -295,7 +302,7 @@ class Data:
             if status != STATUS_OK:
                 logger.error(f"Error in save_models: {response}")
                 return status, response
-
+            logger.info("Models trained.")
             return STATUS_OK, {"message": "Models trained."}
         except Exception as e:
             logger.error(f"Error in train_models: {str(e)}")
@@ -306,6 +313,7 @@ class Data:
         Evaluate models for the dataset.
         """
         try:
+            logger.info("Evaluating models for the dataset")
             dataset_path = os.path.join(
                 *FOLDERS_DATASET_NAMES["MAIN"],
                 FOLDERS_DATASET_NAMES["DATASET"],
@@ -337,7 +345,7 @@ class Data:
             if status != STATUS_OK:
                 logger.error(f"Error in evaluate_models: {response}")
                 return status, response
-
+            logger.info(f"Model evaluation: {response}")
             return STATUS_OK, response
 
         except Exception as e:

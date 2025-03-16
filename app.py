@@ -1,20 +1,16 @@
-from src.api.integrationsApi import IntegrationsApi
+from src.request.data.data import DataRequest
+from src.request.integrations.integrations import IntegrationsRequest
 from flask import Flask
 from flask_restful import Api
-import logging
+from config import setup_logger
 
-logging.basicConfig(
-    filename="app.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
-logger = logging.getLogger(__name__)
+logger = setup_logger()
 
 app = Flask(__name__)
 api = Api(app)
 
-api.add_resource(IntegrationsApi, "/images")
+api.add_resource(DataRequest, "/model/train")
+api.add_resource(IntegrationsRequest, "/images")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=3000)
+    app.run(host="0.0.0.0", port=3000, debug=True)
