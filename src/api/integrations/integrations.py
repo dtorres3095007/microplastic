@@ -7,12 +7,14 @@ from src.shared.constants import (
     R20_BANDS,
     R20_FOLDER,
     STATUS_INTERNAL_SERVER_ERROR,
+    STATUS_BAD_REQUEST,
     STATUS_OK)
 import pandas as pd
 import geopandas as gpd
 import os
 from shapely.geometry import shape
 import logging
+from src.entities.features.features import Feature
 
 logger = logging.getLogger(__name__)
 
@@ -172,3 +174,63 @@ class Integrations:
             logger.error(f"An error occurred: {e}")
             return STATUS_INTERNAL_SERVER_ERROR, {"message": "An error occurred."}
         return STATUS_OK, {"message": "Images extracted successfully."}
+
+    def calculate_features(self) -> tuple:
+        """
+        Calculate features for the model polygons.
+        """
+        try:
+            logger.info("Calculating features")
+            base_dir = os.path.join(os.getcwd(), *self.folders["MAIN"])
+            for polygon_folder in os.listdir(base_dir):
+                polygon_path = os.path.join(base_dir, polygon_folder)
+                cleaned_path = os.path.join(
+                    polygon_path, self.folders["CLEANED"]
+                )
+
+                if not os.path.isdir(cleaned_path):
+                    continue  # Skip if "cleaned" folder does not exist
+
+                logger.info(f"Processing polygon: {polygon_folder}")
+                for band_folder in os.listdir(cleaned_path):
+                    band_path = os.path.join(cleaned_path, band_folder)
+                    if not os.path.isdir(band_path):
+                        continue
+
+                    band_files = {
+                        os.path.splitext(f)[0]: os.path.join(band_path, f)
+                        for f in os.listdir(band_path)
+                        if f.endswith(".tif")
+                    }
+                    if band_files:
+                        output_folder = os.path.join(
+                            polygon_path, self.folders["FEATURES"], band_folder
+                        )
+                        os.makedirs(output_folder, exist_ok=True)
+                        logger.info("Calculating features")
+                        feature = Feature(band_files, output_folder)
+                        status, message = feature.open_bands()
+                        if status != STATUS_OK:
+                            logger.error(f"Error in open_bands: {message}")
+                            return status, message
+
+                        status, message = feature.calculate_ndvi()
+                        if status != STATUS_OK:
+                            logger.error(f"Error in calculate_ndvi: {message}")
+                        status, message = feature.calculate_ndwi()
+                        if status != STATUS_OK:
+                            logger.error(f"Error in calculate_ndwi: {message}")
+                        status, message = feature.calculate_ndci()
+                        if status != STATUS_OK:
+                            logger.error(f"Error in calculate_ndci: {message}")
+                        status, message = feature.calculate_fdi()
+                        if status != STATUS_OK:
+                            logger.error(f"Error in calculate_fdi: {message}")
+                        status, message = feature.calculate_ndpi()
+                        if status != STATUS_OK:
+                            logger.error(f"Error in calculate_ndpi: {message}")
+            logger.info("Features calculated")
+            return STATUS_OK, {"message": "Features calculated."}
+        except Exception as e:
+            logger.error(f"Error in calculate_features: {str(e)}")
+            return STATUS_BAD_REQUEST, {"message": str(e)}

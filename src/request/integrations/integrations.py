@@ -1,11 +1,9 @@
 from flask_restful import Resource
-from src.shared.constants import FOLDERS_DOWNLOAD_NAMES, STATUS_BAD_REQUEST, STATUS_OK
+from src.shared.constants import (FOLDERS_DOWNLOAD_NAMES, STATUS_BAD_REQUEST, STATUS_OK)
 from src.api.integrations.integrations import Integrations
 import logging
-import json
 from shapely.geometry import shape
 from flask import request
-import base64
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +15,7 @@ class IntegrationsRequest(Resource):
             initial_date = data["initial_date"]
             end_date = data["end_date"]
             location = data["location"]
-            file_data = base64.b64decode(location).decode('utf-8')
-            geojson_data = json.loads(file_data)
-            geom = geojson_data["features"][0]["geometry"]
-            polygon = shape(geom).wkt
+            polygon = shape(location).wkt
             logger.info("----- Request post IntegrationsApi -----")
             logger.info(f"initial_date : {initial_date} - end_date : {end_date}")
             integrations = Integrations(FOLDERS_DOWNLOAD_NAMES)
