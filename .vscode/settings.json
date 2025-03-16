@@ -1,11 +1,31 @@
 {
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.autopep8",
+        "editor.formatOnSave": true
+    },
+    "python.formatting.autopep8Args": [
+        "--max-line-length=100"
+    ],
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.formatOnType": true,
+    "python.formatting.provider": "black",
     "cSpell.words": [
-        "MICROPLASTIC",
-        "ndci",
-        "ndpi",
-        "ndvi",
-        "ndwi",
+        "cmap",
+        "dotenv",
+        "dropna",
+        "figsize",
+        "georeferenced",
+        "iterrows",
+        "microplastic",
+        "NDCI",
+        "NDPI",
+        "NDVI",
+        "NDWI",
+        "REDEDGE",
         "reproject",
-        "rowcol"
+        "rowcol",
+        "SWIR",
+        "zipf"
     ]
 }

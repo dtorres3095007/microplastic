@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     python3-pip \
     curl \
+    git \
+    && git config --global user.name "Damian Torres Niebles" \
+    && git config --global user.email "damian9530007@gmail.com" \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

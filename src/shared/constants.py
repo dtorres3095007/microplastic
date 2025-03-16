@@ -32,19 +32,23 @@ FEATURE_NDCI = "NDCI"
 FEATURE_FDI = "FDI"
 FEATURE_NDPI = "NDPI"
 FEATURES_LIST = [FEATURE_NDVI, FEATURE_NDWI, FEATURE_NDCI, FEATURE_FDI, FEATURE_NDPI]
-POLYGONS_MODEL_LIST = [POLYGON_11_55_72_91, POLYGON_11_56_72_93, POLYGON_11_57_72_95, POLYGON_11_58_72_97]
+POLYGONS_MODEL_LIST = [
+    POLYGON_11_55_72_91,
+    POLYGON_11_56_72_93,
+    POLYGON_11_57_72_95,
+    POLYGON_11_58_72_97]
 DATES_MODEL_LIST = [{
-        "initial_date": "2024-12-21",
-        "end_date": "2024-12-27"
-    },
+    "initial_date": "2024-12-21",
+    "end_date": "2024-12-27"
+},
     {
         "initial_date": "2025-01-22",
         "end_date": "2025-01-28"
-    },
+},
     {
         "initial_date": "2025-02-22",
         "end_date": "2025-02-28"
-    }
+}
 ]
 FOLDERS_DOWNLOAD_NAMES = {
     "MAIN": ["download"],
@@ -54,14 +58,14 @@ FOLDERS_DOWNLOAD_NAMES = {
     "EXTRACTED_AREA": "extracted_area",
 }
 
-FOLDER_POLYGONS = ["data","polygons"]
+FOLDER_POLYGONS = ["data", "polygons"]
 FOLDERS_MODEL_NAMES = {
-    "MAIN": ["data","images"],
+    "MAIN": ["data", "images"],
     "ZIP": "download",
     "CLEANED": "processed",
     "EXTRACTED": "extracted",
     "FEATURES": "features"
-  }
+}
 
 FOLDERS_DATASET_NAMES = {
     "MAIN": ["data", "train"],
@@ -70,89 +74,88 @@ FOLDERS_DATASET_NAMES = {
 }
 
 MICROPLASTIC_DATA = [
-  {
-    "folder" : POLYGON_11_55_72_91,
-    "latitude": 11.55,
-    "longitude": -72.91,
-    "date": "2024-12-24",
-    "microplastic_concentration": 1.85
-  },
-  {
-    "folder" : POLYGON_11_56_72_93,
-    "latitude": 11.56,
-    "longitude": -72.93,
-    "date": "2024-12-24",
-    "microplastic_concentration": 0.70
-  },
-  {
-    "folder" : POLYGON_11_57_72_95,
-    "latitude": 11.57,
-    "longitude": -72.95,
-    "date": "2024-12-24",
-    "microplastic_concentration": 0.48
-  },
-  {
-    "folder" : POLYGON_11_58_72_97,
-    "latitude": 11.58,
-    "longitude": -72.97,
-    "date": "2024-12-24",
-    "microplastic_concentration": 0.42
-  },
-  {
-    "folder" : POLYGON_11_55_72_91,
-    "latitude": 11.55,
-    "longitude": -72.91,
-    "date": "2025-01-24",
-    "microplastic_concentration": 1.76
-  },
-  {
-    "folder" : POLYGON_11_56_72_93,
-    "latitude": 11.56,
-    "longitude": -72.93,
-    "date": "2025-01-24",
-    "microplastic_concentration": 0.69
-  },
-  {
-    "folder" : POLYGON_11_57_72_95,
-    "latitude": 11.57,
-    "longitude": -72.95,
-    "date": "2025-01-24",
-    "microplastic_concentration": 0.38
-  },
-  {
-    "folder" : POLYGON_11_58_72_97,
-    "latitude": 11.58,
-    "longitude": -72.97,
-    "date": "2025-01-24",
-    "microplastic_concentration": 0.48
-  },
-  {
-    "folder" : POLYGON_11_55_72_91,
-    "latitude": 11.55,
-    "longitude": -72.91,
-    "date": "2025-02-24",
-    "microplastic_concentration": 1.61
-  },
-  {
-    "folder" : POLYGON_11_56_72_93,
-    "latitude": 11.56,
-    "longitude": -72.93,
-    "date": "2025-02-24",
-    "microplastic_concentration": 0.65
-  },
-  {
-    "folder" : POLYGON_11_57_72_95,
-    "latitude": 11.57,
-    "longitude": -72.95,
-    "date": "2025-02-24",
-    "microplastic_concentration": 0.51
-  },
-  {
-    "folder" : POLYGON_11_58_72_97,
-    "latitude": 11.58,
-    "longitude": -72.97,
-    "date": "2025-02-24",
-    "microplastic_concentration": 0.46
-  }
+    {
+        "folder": POLYGON_11_55_72_91,
+        "latitude": 11.55,
+        "longitude": -72.91,
+        "date": "2024-12-24",
+        "microplastic_concentration": 1.85
+    },
+    {
+        "folder": POLYGON_11_56_72_93,
+        "latitude": 11.56,
+        "longitude": -72.93,
+        "date": "2024-12-24",
+        "microplastic_concentration": 0.70
+    },
+    {
+        "folder": POLYGON_11_57_72_95,
+        "latitude": 11.57,
+        "longitude": -72.95,
+        "date": "2024-12-24",
+        "microplastic_concentration": 0.48
+    },
+    {
+        "folder": POLYGON_11_58_72_97,
+        "latitude": 11.58,
+        "longitude": -72.97,
+        "date": "2024-12-24",
+        "microplastic_concentration": 0.42
+    },
+    {
+        "folder": POLYGON_11_55_72_91,
+        "latitude": 11.55,
+        "longitude": -72.91,
+        "date": "2025-01-24",
+        "microplastic_concentration": 1.76
+    },
+    {
+        "folder": POLYGON_11_56_72_93,
+        "latitude": 11.56,
+        "longitude": -72.93,
+        "date": "2025-01-24",
+        "microplastic_concentration": 0.69
+    },
+    {
+        "folder": POLYGON_11_57_72_95,
+        "latitude": 11.57,
+        "longitude": -72.95,
+        "date": "2025-01-24",
+        "microplastic_concentration": 0.38
+    },
+    {
+        "folder": POLYGON_11_58_72_97,
+        "latitude": 11.58,
+        "longitude": -72.97,
+        "date": "2025-01-24",
+        "microplastic_concentration": 0.48
+    },
+    {
+        "folder": POLYGON_11_55_72_91,
+        "latitude": 11.55,
+        "longitude": -72.91,
+        "date": "2025-02-24",
+        "microplastic_concentration": 1.61
+    },
+    {
+        "folder": POLYGON_11_56_72_93,
+        "latitude": 11.56,
+        "longitude": -72.93,
+        "date": "2025-02-24",
+        "microplastic_concentration": 0.65
+    },
+    {
+        "folder": POLYGON_11_57_72_95,
+        "latitude": 11.57,
+        "longitude": -72.95,
+        "date": "2025-02-24",
+        "microplastic_concentration": 0.51
+    },
+    {
+        "folder": POLYGON_11_58_72_97,
+        "latitude": 11.58,
+        "longitude": -72.97,
+        "date": "2025-02-24",
+        "microplastic_concentration": 0.46
+    }
 ]
-

@@ -1,7 +1,13 @@
 from src.shared.utils import get_band_name
 from src.entities.v1.integrations.src.copernicus.copernicus import Copernicus
 from src.entities.v1.integrations.src.processor.processor import Processor
-from src.shared.constants import R10_BANDS, R10_FOLDER, R20_BANDS, R20_FOLDER, STATUS_INTERNAL_SERVER_ERROR, STATUS_OK
+from src.shared.constants import (
+    R10_BANDS,
+    R10_FOLDER,
+    R20_BANDS,
+    R20_FOLDER,
+    STATUS_INTERNAL_SERVER_ERROR,
+    STATUS_OK)
 import pandas as pd
 import geopandas as gpd
 import os
@@ -81,14 +87,16 @@ class Integrations:
                         images = processor.find_subfolder(subfolder_path, res_folder)
                         if images:
                             for filename in os.listdir(images):
-                                if filename.endswith(".jp2"):  # Change to .tif if that is the format
+                                # Change to .tif if that is the format
+                                if filename.endswith(".jp2"):
                                     band_name = filename.split("_")[-2].replace(".jp2", "")
 
                                     if res_folder == R10_FOLDER and band_name not in R10_BANDS:
-                                        continue  
-                                    
-                                    if res_folder == R20_FOLDER and (band_name in R10_BANDS or band_name not in R20_BANDS):
-                                        continue 
+                                        continue
+
+                                    if res_folder == R20_FOLDER and (
+                                            band_name in R10_BANDS or band_name not in R20_BANDS):
+                                        continue
 
                                     file_path = os.path.join(images, filename)
                                     logger.info(f"Processing file: {file_path}")
@@ -96,7 +104,8 @@ class Integrations:
                                     band_cleaned = processor.clean_problematic_areas(band)
 
                                     if res_folder == R20_FOLDER:
-                                        band_cleaned, profile = processor.rescale_band(band_cleaned, profile, 10)
+                                        band_cleaned, profile = processor.rescale_band(
+                                            band_cleaned, profile, 10)
 
                                     folder = os.path.join(output_dir, subfolder)
                                     if not os.path.exists(folder):
@@ -138,7 +147,10 @@ class Integrations:
     def extract_area_at_coordinates(self, lon: float, lat: float, window_size: int):
         """Extract an area around specified coordinates from a raster image and save it as a new image."""
         input_dir = os.path.join(os.getcwd(), *self.folders["MAIN"], self.folders["CLEANED"]),
-        output_dir = os.path.join(os.getcwd(), *self.folders["MAIN"], self.folders["EXTRACTED_AREA"]),
+        output_dir = os.path.join(
+            os.getcwd(),
+            *self.folders["MAIN"],
+            self.folders["EXTRACTED_AREA"]),
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         try:

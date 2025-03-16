@@ -9,6 +9,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 from src.shared.constants import STATUS_BAD_REQUEST, STATUS_OK
 
+
 class Models:
     def __init__(self, csv_path, models_path):
         """
@@ -17,10 +18,10 @@ class Models:
         """
         self.csv_path = csv_path
         self.models_path = models_path
-        self.features = ["NDVI", "NDWI", "NDCI", "FDI", "NDPI"]
-        self.target = "microplastic_concentration"
-        self.scaler = StandardScaler()
-        self.models = {}
+        self.features = ["NDVI", "NDWI", "NDCI", "FDI", "NDPI"]  # Feature columns
+        self.target = "microplastic_concentration"  # Target column
+        self.scaler = StandardScaler()  # Scaler for normalizing features
+        self.models = {}  # Dictionary to store trained models
 
     def load_data(self):
         """
@@ -28,7 +29,7 @@ class Models:
         :return: (STATUS, Response Message)
         """
         try:
-            df = pd.read_csv(self.csv_path)
+            df = pd.read_csv(self.csv_path)  # Load dataset
             df = df.dropna()  # Remove missing values
             return STATUS_OK, df
         except Exception as e:
@@ -41,10 +42,11 @@ class Models:
         :return: (STATUS, Response Message or Data)
         """
         try:
-            X = df[self.features]
-            y = df[self.target]
+            X = df[self.features]  # Extract features
+            y = df[self.target]  # Extract target
 
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, random_state=42)  # Split data
 
             # Normalize features using StandardScaler
             self.scaler.fit(X_train)
@@ -63,13 +65,17 @@ class Models:
         :return: (STATUS, Response Message)
         """
         try:
+            # Train Linear Regression model
             self.models["Linear Regression"] = LinearRegression()
             self.models["Linear Regression"].fit(X_train, y_train)
 
+            # Train Random Forest model
             self.models["Random Forest"] = RandomForestRegressor(n_estimators=100, random_state=42)
             self.models["Random Forest"].fit(X_train, y_train)
 
-            self.models["Neural Network"] = MLPRegressor(hidden_layer_sizes=(64, 32), max_iter=1000, random_state=42)
+            # Train Neural Network model
+            self.models["Neural Network"] = MLPRegressor(
+                hidden_layer_sizes=(64, 32), max_iter=1000, random_state=42)
             self.models["Neural Network"].fit(X_train, y_train)
 
             return STATUS_OK, {"message": "Models trained."}
@@ -86,9 +92,9 @@ class Models:
         try:
             results = {}
             for name, model in self.models.items():
-                y_pred = model.predict(X_test)
-                mse = mean_squared_error(y_test, y_pred)
-                r2 = r2_score(y_test, y_pred)
+                y_pred = model.predict(X_test)  # Predict using the model
+                mse = mean_squared_error(y_test, y_pred)  # Calculate Mean Squared Error
+                r2 = r2_score(y_test, y_pred)  # Calculate R² score
                 results[name] = {"mse": mse, "r2": r2}
 
             return STATUS_OK, results
@@ -103,10 +109,10 @@ class Models:
         """
         try:
             path = self.models_path
-            os.makedirs(path, exist_ok=True)
+            os.makedirs(path, exist_ok=True)  # Create directory if it doesn't exist
             for name, model in self.models.items():
-                joblib.dump(model, f"{path}/{name.replace(' ', '_')}.pkl")
-            joblib.dump(self.scaler, f"{path}/scaler.pkl")
+                joblib.dump(model, f"{path}/{name.replace(' ', '_')}.pkl")  # Save model
+            joblib.dump(self.scaler, f"{path}/scaler.pkl")  # Save scaler
             return STATUS_OK, {"message": "Models saved successfully."}
         except Exception as e:
             return STATUS_BAD_REQUEST, {"message": str(e)}
@@ -119,9 +125,13 @@ class Models:
         """
         try:
             path = self.models_path
+            # Load Linear Regression model
             self.models["Linear Regression"] = joblib.load(f"{path}/Linear_Regression.pkl")
+            # Load Random Forest model
             self.models["Random Forest"] = joblib.load(f"{path}/Random_Forest.pkl")
+            # Load Neural Network model
             self.models["Neural Network"] = joblib.load(f"{path}/Neural_Network.pkl")
+            # Load scaler
             self.scaler = joblib.load(f"{path}/scaler.pkl")
             return STATUS_OK, {"message": "Models loaded successfully."}
         except Exception as e:

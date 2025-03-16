@@ -9,6 +9,7 @@ import base64
 
 logger = logging.getLogger(__name__)
 
+
 class IntegrationsApi(Resource):
     def post(self):
         try:
@@ -28,13 +29,13 @@ class IntegrationsApi(Resource):
             if status != STATUS_OK:
                 logger.error(f"Error in get_images: {message}")
                 return message, status
-            
+
             status, message = integrations.clean_images()
 
             if status != STATUS_OK:
                 logger.error(f"Error in clean_images: {message}")
 
-            return {"message" : "Images downloaded and cleaned successfully"}, STATUS_OK
+            return {"message": "Images downloaded and cleaned successfully"}, STATUS_OK
 
         except Exception as e:
             logger.error(f"Error in post IntegrationsApi: {e}")

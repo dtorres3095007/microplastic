@@ -1,3 +1,4 @@
 from integrations.integrations import Integrations
+from data.data import Data
 
-entities = {"integrations": Integrations}
+entities = {"integrations": Integrations, "data": Data}

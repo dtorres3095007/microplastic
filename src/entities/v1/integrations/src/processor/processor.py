@@ -14,13 +14,11 @@ class Processor:
     def __init__(self, threshold=10000):
         self.threshold = threshold
 
-        # Función para leer una banda de Sentinel-2
-
     def read_band(self, file_path: str):
-        """Lee una banda raster de un archivo .jp2 o .tif"""
+        """Read a band from a raster file."""
         with rasterio.open(file_path) as dataset:
-            band = dataset.read(1)  # Leer la primera capa de la banda
-            profile = dataset.profile  # Obtener los metadatos
+            band = dataset.read(1)  # Read the first band
+            profile = dataset.profile  # Get the metadata of the raster
         return band, profile
 
     def find_subfolder(self, parent_folder, subfolder_name):
@@ -44,17 +42,18 @@ class Processor:
 
     def save_cleaned_band(self, band, profile, output_path: str):
         """Save a cleaned band to a .tif file ensuring CRS is preserved."""
-        
-        # Verificar si CRS y Transform están en el perfil
+
+        # che ck if the CRS is missing
         if profile.get("crs") is None:
-            profile["crs"] = rasterio.crs.CRS.from_epsg(32618)  # Forzar CRS si está ausente
+            profile["crs"] = rasterio.crs.CRS.from_epsg(32618)  # Set a default CRS if missing
 
         if profile.get("transform") is None:
-            raise ValueError("❌ Transform is missing! The image might not be correctly georeferenced.")
+            raise ValueError(
+                "Transform is missing! The image might not be correctly georeferenced.")
 
         profile.update(
-            dtype=rasterio.uint16, 
-            count=1, 
+            dtype=rasterio.uint16,
+            count=1,
             nodata=0,
             driver="GTiff"
         )
@@ -142,7 +141,6 @@ class Processor:
             left=left, bottom=bottom, right=right, top=top, resolution=target_resolution
         )
 
-        
         profile.update(transform=dst_transform, width=width, height=height)
 
         rescaled_band = np.empty((height, width), dtype=rasterio.uint16)

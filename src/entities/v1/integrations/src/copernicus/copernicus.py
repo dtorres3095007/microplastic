@@ -29,10 +29,7 @@ class Copernicus:
             "grant_type": "password",
         }
         try:
-            r = requests.post(
-                self.url_auth,
-                data=data,
-            )
+            r = requests.post(self.url_auth, data=data, timeout=1800)
             r.raise_for_status()
         except Exception as e:
             raise Exception(
@@ -48,7 +45,7 @@ class Copernicus:
         :return: JSON response of the search results or None if an error occurs.
         """
         search_url = f"{self.url_data}?$filter=Collection/Name eq '{self.data_collection}' and OData.CSC.Intersects(area=geography'SRID=4326;{polygon}') and ContentDate/Start gt {initial_date}T00:00:00.000Z and ContentDate/Start lt {end_date}T00:00:00.000Z&$count=True&$top=1000"
-        response = requests.get(search_url)
+        response = requests.get(search_url, timeout=1800)
         if response.status_code == STATUS_OK:
             return response.json()
         else:
@@ -93,7 +90,6 @@ class Copernicus:
                 return STATUS_OK, {"message": f"Extracted {zip_name} to {extract_to}"}
         except Exception as e:
             return STATUS_BAD_REQUEST, {"message": f"Error extracting {zip}: {e}"}
-            
 
     def delete_file(self, file_name: str):
         """

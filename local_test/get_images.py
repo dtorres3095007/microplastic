@@ -17,4 +17,3 @@ if __name__ == "__main__":
     integrations = Integrations(FOLDERS_DOWNLOAD_NAMES)
     status, message = integrations.get_images(polygon, initial_date, end_date)
     print(status, message)
-
