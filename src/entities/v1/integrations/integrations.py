@@ -92,15 +92,12 @@ class Integrations:
 
                                     file_path = os.path.join(images, filename)
                                     logger.info(f"Processing file: {file_path}")
-                                    #Read the data band
                                     band, profile = processor.read_band(file_path)
-                                    # Clean the problematic areas
-                                    # band = processor.clean_problematic_areas(band)
+                                    band_cleaned = processor.clean_problematic_areas(band)
 
-                                    # if res_folder == R20_FOLDER:
-                                    #     band, profile = processor.rescale_band(band, profile, 10)
+                                    if res_folder == R20_FOLDER:
+                                        band_cleaned, profile = processor.rescale_band(band_cleaned, profile, 10)
 
-                                    # Save the cleaned band
                                     folder = os.path.join(output_dir, subfolder)
                                     if not os.path.exists(folder):
                                         os.makedirs(folder)
@@ -109,7 +106,7 @@ class Integrations:
                                         folder,
                                         f"{band_name}.tif",
                                     )
-                                    processor.save_cleaned_band(band, profile, output_path)
+                                    processor.save_cleaned_band(band_cleaned, profile, output_path)
         except Exception as e:
             logger.error(f"An error occurred: {e}")
             return STATUS_INTERNAL_SERVER_ERROR, {"message": "An error occurred."}

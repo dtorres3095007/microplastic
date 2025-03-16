@@ -6,13 +6,15 @@ import json
 from src.entities.v1.data.src.models.models import Models
 from src.shared.utils import save_dataset_to_csv
 from src.entities.v1.data.src.features.features import Feature
-from src.shared.constants import DATES_MODEL_LIST, FEATURES_LIST, FOLDER_POLYGONS, FOLDERS_DATASET_NAMES, FOLDERS_MODEL_NAMES, MICROPLASTIC_DATA, POLYGONS_MODEL_LIST, STATUS_BAD_REQUEST, STATUS_OK
+from src.shared.constants import DATES_MODEL_LIST, FEATURE_FDI, FEATURE_NDCI, FEATURE_NDPI, FEATURE_NDVI, FEATURE_NDWI, FEATURES_LIST, FOLDER_POLYGONS, FOLDERS_DATASET_NAMES, FOLDERS_MODEL_NAMES, MICROPLASTIC_DATA, POLYGONS_MODEL_LIST, STATUS_BAD_REQUEST, STATUS_OK
 from src.entities.v1.integrations.integrations import Integrations
 import os
 from datetime import datetime, timedelta
 import rasterio
 from rasterio.transform import rowcol
+from rasterio.warp import transform
 logger = logging.getLogger(__name__)
+from pyproj import CRS
 
 
 class Data:
@@ -141,9 +143,18 @@ class Data:
                 features_path = os.path.join(polygon_path, FOLDERS_MODEL_NAMES["FEATURES"])
                 logger.info(f"Processing polygon: {folder} - {date}")
 
+                indicators = {
+                    FEATURE_NDVI : [],
+                    FEATURE_NDWI : [],
+                    FEATURE_NDCI : [],
+                    FEATURE_FDI : [],
+                    FEATURE_NDPI : []
+                }
+
                 if not os.path.isdir(features_path):
                     logger.error(f"Processing polygon: {folder} - {date} - Error: features_path does not exist")
                     continue 
+
 
                 for band_indicator_folder in os.listdir(features_path):
                     date_str = band_indicator_folder.split("_")[2][:8]
@@ -161,16 +172,22 @@ class Data:
                                 data[indicator_name] = None
                                 logger.error(f"Indicator file {indicator_file} does not exist")
                                 continue
-
+                        
                             with rasterio.open(indicator_file) as datasetIndicator:
-                                row, col = map(int, rowcol(datasetIndicator.transform, longitude, latitude))
+                                image_crs = datasetIndicator.crs
+                                lon_utm, lat_utm = transform(CRS.from_epsg(4326), image_crs, [longitude], [latitude])
+                                row, col = map(int, rowcol(datasetIndicator.transform, lon_utm[0], lat_utm[0]))
                                 raw_value = datasetIndicator.read(1)[row, col]
                                 value = (raw_value / 32767.5) - 1
-                                data[indicator_name] = value
+                                indicators[indicator_name].append(value)
                                 logger.info(f"Extracted {indicator_name}: {value} for {folder} and {date} and {band_indicator_folder}")
-            
-            dataset_path = os.path.join(*FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["DATASET"])
 
+                for indicator_name in FEATURES_LIST:
+                    if indicators[indicator_name]:
+                        data[indicator_name] = sum(indicators[indicator_name]) / len(indicators[indicator_name])
+                    else:
+                        data[indicator_name] = None
+            dataset_path = os.path.join(*FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["DATASET"])
             status, message = save_dataset_to_csv(dataset,dataset_path)
             if not status:
                 logger.error(f"Error in save_dataset_to_csv: {message}")
@@ -192,7 +209,7 @@ class Data:
             dataset_path = os.path.join(*FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["DATASET"], "microplastics.csv")
             models_path = os.path.join(*FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["MODELS"])
             # Initialize model class
-            model_trainer = Models(dataset_path)
+            model_trainer = Models(dataset_path, models_path)
 
             # Load data
             status, response = model_trainer.load_data()
@@ -221,7 +238,7 @@ class Data:
                 return status, response
 
             # Save models
-            status, response = model_trainer.save_models(models_path)
+            status, response = model_trainer.save_models()
             if status != STATUS_OK:
                 logger.error(f"Error in save_models: {response}")
                 return status, response
@@ -231,4 +248,45 @@ class Data:
         except Exception as e:
             logger.error(f"Error in train_models: {str(e)}")
             logger.info("----------------- Training models Error-----------------") 
+            return STATUS_BAD_REQUEST, {"message": str(e)}
+    
+
+    def evaluate_models(self) -> tuple:
+        """
+        Evaluate models for the dataset.
+        """
+        try:
+            logger.info("----------------- Evaluating models -----------------")
+            dataset_path = os.path.join(*FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["DATASET"], "microplastics.csv")
+            models_path = os.path.join(*FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["MODELS"])
+            # Initialize model class
+            model_trainer = Models(dataset_path, models_path)
+            
+            status, response = model_trainer.load_data()
+            if status != STATUS_OK:
+                logger.error(f"Error in load_data: {response}")
+                return status, response
+            df = response
+
+            status, response = model_trainer.load_models()
+            if status != STATUS_OK:
+                logger.error(f"Error in load_models: {response}")
+                return status, response
+            
+            X = df[model_trainer.features]
+            y = df[model_trainer.target]
+
+            X_scaled = model_trainer.scaler.transform(X)
+            status, response = model_trainer.evaluate_models(X_scaled, y)
+
+            if status != STATUS_OK:
+                logger.error(f"Error in evaluate_models: {response}")
+                return status, response
+
+            logger.info("----------------- Models evaluated -----------------")
+            return STATUS_OK, response
+
+        except Exception as e:
+            logger.error(f"Error in evaluate_models: {str(e)}")
+            logger.info("----------------- Evaluating models Error-----------------") 
             return STATUS_BAD_REQUEST, {"message": str(e)}

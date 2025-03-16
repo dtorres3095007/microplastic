@@ -10,16 +10,17 @@ from sklearn.metrics import mean_squared_error, r2_score
 from src.shared.constants import STATUS_BAD_REQUEST, STATUS_OK
 
 class Models:
-    def __init__(self, csv_path):
+    def __init__(self, csv_path, models_path):
         """
         Initialize the class with dataset path and set common variables.
         :param csv_path: Path to the CSV dataset.
         """
         self.csv_path = csv_path
+        self.models_path = models_path
         self.features = ["NDVI", "NDWI", "NDCI", "FDI", "NDPI"]
         self.target = "microplastic_concentration"
         self.scaler = StandardScaler()
-        self.models = {}  # Dictionary to store trained models
+        self.models = {}
 
     def load_data(self):
         """
@@ -50,7 +51,7 @@ class Models:
             X_train_scaled = self.scaler.transform(X_train)
             X_test_scaled = self.scaler.transform(X_test)
 
-            return STATUS_OK, (X_train_scaled, X_test_scaled, y_train, y_test)
+            return STATUS_OK, (X_train_scaled, X_test_scaled, y_train, y_test, y)
         except Exception as e:
             return STATUS_BAD_REQUEST, {"message": str(e)}
 
@@ -94,13 +95,15 @@ class Models:
         except Exception as e:
             return STATUS_BAD_REQUEST, {"message": str(e)}
 
-    def save_models(self, path="models/"):
+    def save_models(self):
         """
         Save trained models to disk.
         :param path: Directory to save models.
         :return: (STATUS, Response Message)
         """
         try:
+            path = self.models_path
+            os.makedirs(path, exist_ok=True)
             for name, model in self.models.items():
                 joblib.dump(model, f"{path}/{name.replace(' ', '_')}.pkl")
             joblib.dump(self.scaler, f"{path}/scaler.pkl")
@@ -108,13 +111,14 @@ class Models:
         except Exception as e:
             return STATUS_BAD_REQUEST, {"message": str(e)}
 
-    def load_models(self, path="models/"):
+    def load_models(self):
         """
         Load trained models from disk.
         :param path: Directory to load models.
         :return: (STATUS, Response Message)
         """
         try:
+            path = self.models_path
             self.models["Linear Regression"] = joblib.load(f"{path}/Linear_Regression.pkl")
             self.models["Random Forest"] = joblib.load(f"{path}/Random_Forest.pkl")
             self.models["Neural Network"] = joblib.load(f"{path}/Neural_Network.pkl")

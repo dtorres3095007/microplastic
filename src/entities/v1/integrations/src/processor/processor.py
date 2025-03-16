@@ -7,6 +7,8 @@ import rasterio.env
 from rasterio.transform import rowcol
 from rasterio.warp import calculate_default_transform, reproject, Resampling
 
+from src.shared.constants import STATUS_INTERNAL_SERVER_ERROR, STATUS_OK
+
 
 class Processor:
     def __init__(self, threshold=10000):
@@ -41,15 +43,27 @@ class Processor:
         return band_cleaned
 
     def save_cleaned_band(self, band, profile, output_path: str):
-        """Save a cleaned band to a .tif file."""
-        # Update the profile to use a compatible data type
-        profile.update(dtype=rasterio.uint16, nodata=0, GDAL_TIFF_INTERNAL_MASK="YES")
+        """Save a cleaned band to a .tif file ensuring CRS is preserved."""
+        
+        # Verificar si CRS y Transform están en el perfil
+        if profile.get("crs") is None:
+            profile["crs"] = rasterio.crs.CRS.from_epsg(32618)  # Forzar CRS si está ausente
 
-        # Convert NaN values to 0 (or any other nodata value you prefer)
+        if profile.get("transform") is None:
+            raise ValueError("❌ Transform is missing! The image might not be correctly georeferenced.")
+
+        profile.update(
+            dtype=rasterio.uint16, 
+            count=1, 
+            nodata=0,
+            driver="GTiff"
+        )
+
         band_cleaned = np.where(np.isnan(band), 0, band).astype(rasterio.uint16)
-        with rasterio.Env(GDAL_PAM_ENABLED="NO"):
-            with rasterio.open(output_path, "w", **profile) as dst:
-                dst.write(band_cleaned, 1)
+
+        with rasterio.open(output_path, "w", **profile) as dst:
+            dst.write(band_cleaned, 1)
+            dst.crs = profile["crs"]
 
     def visualize_band(self, image_path: str, output_folder: str):
         print(f"Visualizing the band: {image_path}")

@@ -117,18 +117,24 @@ class Feature:
     def save_feature(self, feature_array, filename):
         try:
             output_path = os.path.join(self.output_path, filename)
-            
             sample_band = next(iter(self.path_bands.values()))
             
             with rasterio.open(sample_band) as src:
                 profile = src.profile
-                profile.update(dtype=rasterio.uint16, count=1)
 
+            profile.update(
+                dtype=rasterio.uint16, 
+                count=1, 
+                nodata=0,
+                driver="GTiff"
+            )
             scaled_feature = ((feature_array + 1) * 32767.5).astype(np.uint16)
 
             with rasterio.open(output_path, "w", **profile) as dst:
                 dst.write(scaled_feature, 1)
+                dst.crs = profile["crs"]
             
             return STATUS_OK, {"message": f"Feature {filename} saved."}
+        
         except Exception as e:
             return STATUS_INTERNAL_SERVER_ERROR, {"message": f"Error saving feature: {str(e)}"}
