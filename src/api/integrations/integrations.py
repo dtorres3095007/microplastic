@@ -7,14 +7,16 @@ from src.shared.constants import (
     R20_BANDS,
     R20_FOLDER,
     STATUS_INTERNAL_SERVER_ERROR,
-    STATUS_BAD_REQUEST,
+    FILE_GEOJSON,
+    FILE_GRID,
     STATUS_OK)
 import pandas as pd
 import geopandas as gpd
 import os
 from shapely.geometry import shape
 import logging
-from src.entities.features.features import Feature
+from shapely.geometry import Polygon
+from shapely.wkt import loads
 
 logger = logging.getLogger(__name__)
 
@@ -175,62 +177,32 @@ class Integrations:
             return STATUS_INTERNAL_SERVER_ERROR, {"message": "An error occurred."}
         return STATUS_OK, {"message": "Images extracted successfully."}
 
-    def calculate_features(self) -> tuple:
+    def create_polygons_10m(self, coordinates):
         """
-        Calculate features for the model polygons.
+        Create polygons from the main polygon.
         """
         try:
-            logger.info("Calculating features")
-            base_dir = os.path.join(os.getcwd(), *self.folders["MAIN"])
-            for polygon_folder in os.listdir(base_dir):
-                polygon_path = os.path.join(base_dir, polygon_folder)
-                cleaned_path = os.path.join(
-                    polygon_path, self.folders["CLEANED"]
-                )
+            polygon_coords = []
+            for coord in coordinates:
+                polygon_coords.append((coord[0], coord[1]))
 
-                if not os.path.isdir(cleaned_path):
-                    continue  # Skip if "cleaned" folder does not exist
+            processor = self.processor()
+            polygon = Polygon(polygon_coords)
+            grid_cells = processor.generate_grid(polygon)
+            input_dir = os.path.join(os.getcwd(), *self.folders["MAIN"], self.folders["POLYGONS"])
+            os.makedirs(input_dir, exist_ok=True)
+            # Save the base polygon as a GeoJSON file
+            polygon_gdf = gpd.GeoDataFrame(geometry=[polygon], crs="EPSG:4326")
+            polygon_gdf.to_file(f"{input_dir}/{FILE_GEOJSON}", driver="GeoJSON")
 
-                logger.info(f"Processing polygon: {polygon_folder}")
-                for band_folder in os.listdir(cleaned_path):
-                    band_path = os.path.join(cleaned_path, band_folder)
-                    if not os.path.isdir(band_path):
-                        continue
+            # Save the grid as a GeoJSON file
 
-                    band_files = {
-                        os.path.splitext(f)[0]: os.path.join(band_path, f)
-                        for f in os.listdir(band_path)
-                        if f.endswith(".tif")
-                    }
-                    if band_files:
-                        output_folder = os.path.join(
-                            polygon_path, self.folders["FEATURES"], band_folder
-                        )
-                        os.makedirs(output_folder, exist_ok=True)
-                        logger.info("Calculating features")
-                        feature = Feature(band_files, output_folder)
-                        status, message = feature.open_bands()
-                        if status != STATUS_OK:
-                            logger.error(f"Error in open_bands: {message}")
-                            return status, message
-
-                        status, message = feature.calculate_ndvi()
-                        if status != STATUS_OK:
-                            logger.error(f"Error in calculate_ndvi: {message}")
-                        status, message = feature.calculate_ndwi()
-                        if status != STATUS_OK:
-                            logger.error(f"Error in calculate_ndwi: {message}")
-                        status, message = feature.calculate_ndci()
-                        if status != STATUS_OK:
-                            logger.error(f"Error in calculate_ndci: {message}")
-                        status, message = feature.calculate_fdi()
-                        if status != STATUS_OK:
-                            logger.error(f"Error in calculate_fdi: {message}")
-                        status, message = feature.calculate_ndpi()
-                        if status != STATUS_OK:
-                            logger.error(f"Error in calculate_ndpi: {message}")
-            logger.info("Features calculated")
-            return STATUS_OK, {"message": "Features calculated."}
+            grid_gdf = gpd.GeoDataFrame(geometry=grid_cells, crs="EPSG:4326")
+            grid_gdf.to_file(f"{input_dir}/{FILE_GRID}", driver="GeoJSON")
+            logger.info(f"File '{FILE_GEOJSON}' saved with the base polygon.")
+            logger.info(f"File '{FILE_GRID}' saved with {len(grid_cells)} 10m x 10m cells.")
+            return STATUS_OK, {"message": "Polygons created successfully."}
         except Exception as e:
-            logger.error(f"Error in calculate_features: {str(e)}")
-            return STATUS_BAD_REQUEST, {"message": str(e)}
+            logger.error(f"An error occurred create_polygons_10m: {e}")
+            return STATUS_INTERNAL_SERVER_ERROR, {
+                "message": "An error occurred in create_polygons_10m."}

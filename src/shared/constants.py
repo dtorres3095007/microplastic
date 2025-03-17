@@ -32,6 +32,9 @@ FEATURE_NDCI = "NDCI"
 FEATURE_FDI = "FDI"
 FEATURE_NDPI = "NDPI"
 FEATURES_LIST = [FEATURE_NDVI, FEATURE_NDWI, FEATURE_NDCI, FEATURE_FDI, FEATURE_NDPI]
+FILE_GEOJSON = "polygon.geojson"
+FILE_GRID = "grid_10m.geojson"
+FILE_DATASET_PREDICTOR = "dataset_predictor.csv"
 POLYGONS_MODEL_LIST = [
     POLYGON_11_55_72_91,
     POLYGON_11_56_72_93,
@@ -51,16 +54,20 @@ DATES_MODEL_LIST = [{
 }
 ]
 FOLDERS_DOWNLOAD_NAMES = {
-    "MAIN": ["download"],
-    "ZIP": "zip",
-    "CLEANED": "cleaned",
+    "MAIN": ["data_predictor"],
+    "ZIP": "download",
+    "CLEANED": "processed",
     "EXTRACTED": "extracted",
     "EXTRACTED_AREA": "extracted_area",
+    "FEATURES": "features",
+    "FEATURES_MEAN": "features_mean",
+    "POLYGONS": "polygons",
+    "DATASET": "dataset"
 }
 
-FOLDER_POLYGONS = ["data", "polygons"]
+FOLDER_POLYGONS = ["data_trainer", "polygons"]
 FOLDERS_MODEL_NAMES = {
-    "MAIN": ["data", "images"],
+    "MAIN": ["data_trainer", "images"],
     "ZIP": "download",
     "CLEANED": "processed",
     "EXTRACTED": "extracted",
@@ -68,7 +75,7 @@ FOLDERS_MODEL_NAMES = {
 }
 
 FOLDERS_DATASET_NAMES = {
-    "MAIN": ["data", "train"],
+    "MAIN": ["data_trainer", "train"],
     "DATASET": "dataset",
     "MODELS": "models",
 }

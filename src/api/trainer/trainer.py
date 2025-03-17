@@ -32,10 +32,10 @@ from rasterio.warp import transform
 logger = logging.getLogger(__name__)
 
 
-class Data:
+class Trainer:
     def __init__(self):
         """
-        Initialize the Data class.
+        Initialize the Trainer class.
         """
 
     def get_model_images(self) -> dict:

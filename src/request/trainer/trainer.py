@@ -1,38 +1,38 @@
 from flask_restful import Resource
 from src.shared.constants import STATUS_BAD_REQUEST, STATUS_OK
-from src.api.data.data import Data
+from src.api.trainer.trainer import Trainer
 
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-class DataRequest(Resource):
+class TrainerRequest(Resource):
     def get(self):
         try:
-            logger.info("----- Request DataRequest -----")
-            data = Data()
-            status, message = data.get_model_images()
+            logger.info("----- Request TrainerRequest -----")
+            trainer = Trainer()
+            status, message = trainer.get_model_images()
 
             if status != STATUS_OK:
                 return message, status
 
-            status, message = data.clean_model_images()
+            status, message = trainer.clean_model_images()
 
             if status != STATUS_OK:
                 return message, status
 
-            status, message = data.calculate_features()
+            status, message = trainer.calculate_features()
             if status != STATUS_OK:
                 return message, status
 
-            status, message = data.create_dataset()
+            status, message = trainer.create_dataset()
             if status != STATUS_OK:
                 return message, status
 
-            status, message = data.train_models()
+            status, message = trainer.train_models()
             return message, status
 
         except Exception as e:
-            logger.error(f"Error in DataRequest: {e}")
+            logger.error(f"Error in TrainerRequest: {e}")
             return {"message": f"Data model error : {e}"}, STATUS_BAD_REQUEST

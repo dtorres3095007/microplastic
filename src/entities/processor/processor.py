@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import rasterio.env
 from rasterio.transform import rowcol
 from rasterio.warp import calculate_default_transform, reproject, Resampling
-
-from src.shared.constants import STATUS_INTERNAL_SERVER_ERROR, STATUS_OK
+from pyproj import Transformer
+from shapely.geometry import Polygon, box
 
 
 class Processor:
@@ -155,3 +155,40 @@ class Processor:
         )
 
         return rescaled_band, profile
+
+    def generate_grid(self, polygon, grid_size=10, epsg_utm=32618):
+        """
+        Divides a polygon into a grid of 10m x 10m cells.
+
+        :param polygon: Shapely Polygon in EPSG:4326 (lat/lon)
+        :param grid_size: Size of each grid cell in meters (default: 10m)
+        :param epsg_utm: UTM zone for projecting the polygon
+        :return: List of grid cells in EPSG:4326
+        """
+        # Convert the polygon to UTM for accurate distance calculations
+        transformer_to_utm = Transformer.from_crs("EPSG:4326", f"EPSG:{epsg_utm}", always_xy=True)
+        transformer_to_wgs = Transformer.from_crs(f"EPSG:{epsg_utm}", "EPSG:4326", always_xy=True)
+
+        # Convert lat/lon polygon to UTM
+        utm_coords = [transformer_to_utm.transform(x, y) for x, y in polygon.exterior.coords]
+        utm_polygon = Polygon(utm_coords)
+
+        # Get the polygon bounds in UTM coordinates
+        min_x, min_y, max_x, max_y = utm_polygon.bounds
+
+        # Generate the grid cells
+        grid_cells = []
+        x_coords = np.arange(min_x, max_x, grid_size)
+        y_coords = np.arange(min_y, max_y, grid_size)
+
+        for x in x_coords:
+            for y in y_coords:
+                cell = box(x, y, x + grid_size, y + grid_size)
+                if utm_polygon.intersects(cell):  # Keep only cells that intersect the polygon
+                    # Convert the cell back to lat/lon
+                    wgs_coords = [
+                        transformer_to_wgs.transform(
+                            px, py) for px, py in cell.exterior.coords]
+                    grid_cells.append(Polygon(wgs_coords))
+
+        return grid_cells
