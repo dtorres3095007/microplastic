@@ -7,6 +7,7 @@ from src.shared.constants import (
     FILE_DATASET_WITH_PREDICTIONS,
     FILE_MAP_PREDICTIONS,
     FOLDERS_DATASET_NAMES,
+    BEST_MODEL,
     STATUS_OK)
 import logging
 from src.api.integrations.integrations import Integrations
@@ -279,7 +280,7 @@ class Predictor:
         Predict the microplastic concentration.
         """
         dataset_path = os.path.join(
-            *FOLDERS_DOWNLOAD_NAMES["MAIN"], FOLDERS_DOWNLOAD_NAMES["DATASET"], "dataset_predictor.csv"
+            *FOLDERS_DOWNLOAD_NAMES["MAIN"], FOLDERS_DOWNLOAD_NAMES["DATASET"], FILE_DATASET_INDICATORS
         )
         models_path = os.path.join(
             *FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["MODELS"]
@@ -334,21 +335,21 @@ class Predictor:
             # Create a color map based on the forest model predictions
             colormap = folium.LinearColormap(
                 ["blue", "green", "yellow", "red"],
-                vmin=gdf["pred_forest"].min(),
-                vmax=gdf["pred_forest"].max()
+                vmin=gdf[BEST_MODEL].min(),
+                vmax=gdf[BEST_MODEL].max()
             )
 
             # Add polygons to the map with colors representing microplastic predictions
             for _, row in gdf.iterrows():
                 folium.GeoJson(
                     row["geometry"],
-                    style_function=lambda feature, value=row["pred_forest"]: {
+                    style_function=lambda feature, value=row[BEST_MODEL]: {
                         "fillColor": colormap(value),
                         "color": "black",
                         "weight": 0.5,
                         "fillOpacity": 0.7,
                     },
-                    tooltip=folium.Tooltip(f"Prediction: {row['pred_forest']:.4f}"),
+                    tooltip=folium.Tooltip(f"Prediction: {row[BEST_MODEL]:.4f}"),
                 ).add_to(map_)
 
             # Add the color scale legend to the map
