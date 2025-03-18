@@ -24,6 +24,7 @@ from rasterio.warp import transform_geom
 from src.entities.models.models import Models
 import folium
 from shapely.wkt import loads
+import shutil
 
 logger = logging.getLogger(__name__)
 
@@ -39,18 +40,36 @@ class Predictor:
         self.end_date = end_date
         self.coordinates = coordinates[0]
 
+    def clean_folders(self):
+        """
+        Clean the folders in data_predictor.
+        """
+        try:
+            logger.info("Cleaning folders")
+            folder_path = os.path.join(*FOLDERS_DOWNLOAD_NAMES["MAIN"])
+            if os.path.exists(folder_path):
+                shutil.rmtree(folder_path)
+                logger.info("Folders cleaned")
+            os.makedirs(folder_path, exist_ok=True)
+            return STATUS_OK, {"message": "Folders cleaned."}
+        except Exception as e:
+            logger.error(f"Error in clean_folders: {str(e)}")
+            return STATUS_BAD_REQUEST, {"message": str(e)}
+
     def get_polygon_images(self):
         """
         Get the images from the polygon.
         """
         status, message = self.integrations.get_images(
             self.polygon, self.initial_date, self.end_date)
+        logger.info(f"Images downloaded : {message} - {status}")
 
         if status != STATUS_OK:
             logger.error(f"Error in get_images: {message}")
             return message, status
-
         status, message = self.integrations.clean_images()
+        logger.info(f"Images cleaned : {message} - {status}")
+
         return message, status
 
     def calculate_features(self) -> tuple:
