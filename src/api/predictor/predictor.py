@@ -3,7 +3,10 @@ from src.shared.constants import (
     STATUS_BAD_REQUEST,
     FEATURES_LIST,
     FILE_GRID,
-    FILE_DATASET_PREDICTOR,
+    FILE_DATASET_INDICATORS,
+    FILE_DATASET_WITH_PREDICTIONS,
+    FILE_MAP_PREDICTIONS,
+    FOLDERS_DATASET_NAMES,
     STATUS_OK)
 import logging
 from src.api.integrations.integrations import Integrations
@@ -17,6 +20,9 @@ import pandas as pd
 import json
 from shapely.geometry import shape
 from rasterio.warp import transform_geom
+from src.entities.models.models import Models
+import folium
+from shapely.wkt import loads
 
 logger = logging.getLogger(__name__)
 
@@ -260,10 +266,102 @@ class Predictor:
                 FOLDERS_DOWNLOAD_NAMES["DATASET"])
             os.makedirs(output_csv, exist_ok=True)
             # Save the dataset as a CSV file
-            df.to_csv(f"{output_csv}/{FILE_DATASET_PREDICTOR}", index=False)
+            df.to_csv(f"{output_csv}/{FILE_DATASET_INDICATORS}", index=False)
 
             logger.info(f"Dataset successfully saved at: {output_csv}")
             return STATUS_OK, {"message": "Dataset created."}
         except Exception as e:
             logger.error(f"Error in create_dataset: {str(e)}")
+            return STATUS_BAD_REQUEST, {"message": str(e)}
+
+    def predict(self):
+        """
+        Predict the microplastic concentration.
+        """
+        dataset_path = os.path.join(
+            *FOLDERS_DOWNLOAD_NAMES["MAIN"], FOLDERS_DOWNLOAD_NAMES["DATASET"], "dataset_predictor.csv"
+        )
+        models_path = os.path.join(
+            *FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["MODELS"]
+        )
+        model = Models(dataset_path, models_path)
+        status, message = model.load_data()
+
+        if status != STATUS_OK:
+            return status, message
+
+        df = message
+
+        status, message = model.load_models()
+
+        models = model.models
+        scaler = model.scaler
+        X = df[FEATURES_LIST]
+        linear_model = models["Linear Regression"]
+        random_forest = models["Random Forest"]
+        neural_network = models["Neural Network"]
+        X_scaled = scaler.transform(X)
+        df["pred_linear"] = linear_model.predict(X_scaled)
+        df["pred_forest"] = random_forest.predict(X_scaled)
+        df["pred_neural"] = neural_network.predict(X_scaled)
+        output_path = os.path.join(
+            *FOLDERS_DOWNLOAD_NAMES["MAIN"], FOLDERS_DOWNLOAD_NAMES["DATASET"], FILE_DATASET_WITH_PREDICTIONS
+        )
+        df.to_csv(output_path, index=False)
+        return STATUS_OK, {"message": "Predictions saved successfully."}
+
+    def show_map(self):
+        """
+        Show the map with the polygons.
+        """
+        try:
+            # Load the dataset with predictions
+            csv_file = os.path.join(
+                *FOLDERS_DOWNLOAD_NAMES["MAIN"], FOLDERS_DOWNLOAD_NAMES["DATASET"], FILE_DATASET_WITH_PREDICTIONS
+            )
+            df = pd.read_csv(csv_file)
+
+            # Convert the 'geometry' column from WKT to shapely polygons
+            df["geometry"] = df["geometry"].apply(loads)
+
+            # Create a GeoDataFrame with EPSG:4326 CRS (latitude/longitude)
+            gdf = gpd.GeoDataFrame(df, geometry="geometry", crs="EPSG:4326")
+
+            # Center the map based on the dataset's centroid
+            center = gdf.geometry.centroid.unary_union.centroid
+            map_ = folium.Map(location=[center.y, center.x], zoom_start=12, tiles="cartodbpositron")
+
+            # Create a color map based on the forest model predictions
+            colormap = folium.LinearColormap(
+                ["blue", "green", "yellow", "red"],
+                vmin=gdf["pred_forest"].min(),
+                vmax=gdf["pred_forest"].max()
+            )
+
+            # Add polygons to the map with colors representing microplastic predictions
+            for _, row in gdf.iterrows():
+                folium.GeoJson(
+                    row["geometry"],
+                    style_function=lambda feature, value=row["pred_forest"]: {
+                        "fillColor": colormap(value),
+                        "color": "black",
+                        "weight": 0.5,
+                        "fillOpacity": 0.7,
+                    },
+                    tooltip=folium.Tooltip(f"Prediction: {row['pred_forest']:.4f}"),
+                ).add_to(map_)
+
+            # Add the color scale legend to the map
+            colormap.caption = "Microplastic Concentration Prediction"
+            colormap.add_to(map_)
+
+            # Save the map to an HTML file
+            map_file = os.path.join(
+                *FOLDERS_DOWNLOAD_NAMES["MAIN"], FOLDERS_DOWNLOAD_NAMES["DATASET"], FILE_MAP_PREDICTIONS
+            )
+            map_.save(map_file)
+            logger.info(f"Map generated: {map_file}")
+            return STATUS_OK, {"message": "Map saved successfully."}
+        except Exception as e:
+            logger.error(f"Error in show_map: {str(e)}")
             return STATUS_BAD_REQUEST, {"message": str(e)}

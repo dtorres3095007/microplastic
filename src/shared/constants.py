@@ -34,7 +34,9 @@ FEATURE_NDPI = "NDPI"
 FEATURES_LIST = [FEATURE_NDVI, FEATURE_NDWI, FEATURE_NDCI, FEATURE_FDI, FEATURE_NDPI]
 FILE_GEOJSON = "polygon.geojson"
 FILE_GRID = "grid_10m.geojson"
-FILE_DATASET_PREDICTOR = "dataset_predictor.csv"
+FILE_DATASET_INDICATORS = "dataset_indicators.csv"
+FILE_DATASET_WITH_PREDICTIONS = "dataset_with_predictions.csv"
+FILE_MAP_PREDICTIONS = "microplastic_predictions_map.html"
 POLYGONS_MODEL_LIST = [
     POLYGON_11_55_72_91,
     POLYGON_11_56_72_93,

@@ -7,7 +7,14 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error, r2_score
-from src.shared.constants import STATUS_BAD_REQUEST, STATUS_OK
+from src.shared.constants import (
+    STATUS_BAD_REQUEST,
+    STATUS_OK,
+    FEATURE_NDVI,
+    FEATURE_NDWI,
+    FEATURE_NDCI,
+    FEATURE_FDI,
+    FEATURE_NDPI)
 
 
 class Models:
@@ -18,7 +25,12 @@ class Models:
         """
         self.csv_path = csv_path
         self.models_path = models_path
-        self.features = ["NDVI", "NDWI", "NDCI", "FDI", "NDPI"]  # Feature columns
+        self.features = [
+            FEATURE_NDVI,
+            FEATURE_NDWI,
+            FEATURE_NDCI,
+            FEATURE_FDI,
+            FEATURE_NDPI]  # Feature columns
         self.target = "microplastic_concentration"  # Target column
         self.scaler = StandardScaler()  # Scaler for normalizing features
         self.models = {}  # Dictionary to store trained models
