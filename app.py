@@ -1,16 +1,15 @@
-from src.request.trainer.trainer import TrainerRequest
-from src.request.predictor.predictor import PredictorRequest
-from flask import Flask
-from flask_restful import Api
+from fastapi import FastAPI
+from src.request.trainer import trainer
+from src.request.predictor import predictor
 from config import setup_logger
 
 logger = setup_logger()
 
-app = Flask(__name__)
-api = Api(app)
+app = FastAPI()
 
-api.add_resource(TrainerRequest, "/trainer")
-api.add_resource(PredictorRequest, "/predictor")
+app.include_router(trainer.router, prefix="/trainer")
+app.include_router(predictor.router, prefix="/predictor")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=3000, debug=True)
+    import uvicorn
+    uvicorn.run("app:app", host="0.0.0.0", port=3000, reload=True)

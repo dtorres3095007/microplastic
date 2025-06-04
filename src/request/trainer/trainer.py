@@ -1,38 +1,42 @@
-from flask_restful import Resource
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from src.shared.constants import STATUS_BAD_REQUEST, STATUS_OK
 from src.api.trainer.trainer import Trainer
-
+from src.request.trainer.docs import trainer_summary, trainer_description, trainer_response_description
 import logging
 
+router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-class TrainerRequest(Resource):
-    def get(self):
-        try:
-            logger.info("----- Request TrainerRequest -----")
-            trainer = Trainer()
-            status, message = trainer.get_model_images()
+@router.get(
+    "/model",
+    summary=trainer_summary,
+    description=trainer_description,
+    response_description=trainer_response_description
+)
+def trainer_request():
+    try:
+        logger.info("----- Starting TrainerRequest -----")
+        trainer = Trainer()
 
+        for step in [
+            trainer.get_model_images,
+            trainer.clean_model_images,
+            trainer.calculate_features,
+            trainer.create_dataset,
+            trainer.train_models,
+        ]:
+            status, message = step()
             if status != STATUS_OK:
-                return message, status
+                raise HTTPException(status_code=status, detail=message)
 
-            status, message = trainer.clean_model_images()
+        logger.info("Training completed successfully.")
+        return JSONResponse(status_code=200, content=message)
 
-            if status != STATUS_OK:
-                return message, status
-
-            status, message = trainer.calculate_features()
-            if status != STATUS_OK:
-                return message, status
-
-            status, message = trainer.create_dataset()
-            if status != STATUS_OK:
-                return message, status
-
-            status, message = trainer.train_models()
-            return message, status
-
-        except Exception as e:
-            logger.error(f"Error in TrainerRequest: {e}")
-            return {"message": f"Data model error : {e}"}, STATUS_BAD_REQUEST
+    except Exception as e:
+        logger.error(f"Unhandled error in TrainerRequest: {e}")
+        raise HTTPException(
+            status_code=STATUS_BAD_REQUEST,
+            detail=f"Training pipeline error: {e}"
+        )
