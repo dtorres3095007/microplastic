@@ -1,6 +1,6 @@
 from src.shared.utils import get_band_name
-from src.entities.copernicus.copernicus import Copernicus
-from src.entities.processor.processor import Processor
+from src.entities.machine_learning.src.copernicus.copernicus import Copernicus
+from src.entities.machine_learning.src.processor.processor import Processor
 from src.shared.constants import (
     R10_BANDS,
     R10_FOLDER,

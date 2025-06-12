@@ -1,5 +1,5 @@
 import os
-from src.api.integrations.integrations import Integrations
+from src.entities.machine_learning.src.integrations import Integrations
 
 if __name__ == "__main__":
     input_dir = os.path.join(os.getcwd(), "downloads", "cleaned")

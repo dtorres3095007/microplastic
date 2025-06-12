@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from src.request.trainer import trainer
-from src.request.predictor import predictor
+from src.api.trainer import trainer
+from src.api.predictor import predictor
 from config import setup_logger
 
 logger = setup_logger()
