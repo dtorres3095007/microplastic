@@ -1,387 +1,48 @@
-from src.shared.constants import (
-    FOLDERS_DOWNLOAD_NAMES,
-    STATUS_BAD_REQUEST,
-    FEATURES_LIST,
-    FILE_GRID,
-    FILE_DATASET_INDICATORS,
-    FILE_DATASET_WITH_PREDICTIONS,
-    FILE_MAP_PREDICTIONS,
-    FOLDERS_DATASET_NAMES,
-    BEST_MODEL,
-    STATUS_OK)
-import logging
-from src.api.integrations.integrations import Integrations
-import os
-from src.entities.features.features import Feature
-import rasterio
-import numpy as np
-import geopandas as gpd
-from rasterio.mask import mask
-import pandas as pd
-import json
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from shapely.geometry import shape
-from rasterio.warp import transform_geom
-from src.entities.models.models import Models
-import folium
-from shapely.wkt import loads
-import shutil
+import logging
+from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
+from src.entities.machine_learning.predictor import Predictor
+from src.api.predictor.schema import PredictorRequestBody
+from src.api.predictor.docs import (
+    summary_microplastic,
+    description_microplastic,
+    response_description_microplastic,
+)
 
+router = APIRouter()
 logger = logging.getLogger(__name__)
 
+@router.post(
+    "/microplastic",
+    summary=summary_microplastic,
+    description=description_microplastic,
+    response_description=response_description_microplastic
+)
+async def predictor_request(data: PredictorRequestBody):
+    try:
+        polygon_wkt = shape(data.location.dict()).wkt
+        logger.info(f"initial_date : {data.initial_date} - end_date : {data.end_date}")
 
-class Predictor:
-    def __init__(self, polygon, coordinates, initial_date, end_date):
-        """
-        Initialize the Predictor class.
-        """
-        self.integrations = Integrations(FOLDERS_DOWNLOAD_NAMES)
-        self.polygon = polygon
-        self.initial_date = initial_date
-        self.end_date = end_date
-        self.coordinates = coordinates[0]
+        predictor = Predictor(polygon_wkt, data.location.coordinates, data.initial_date, data.end_date)
 
-    def clean_folders(self):
-        """
-        Clean the folders in data_predictor.
-        """
-        try:
-            logger.info("Cleaning folders")
-            folder_path = os.path.join(*FOLDERS_DOWNLOAD_NAMES["MAIN"])
-            if os.path.exists(folder_path):
-                shutil.rmtree(folder_path)
-                logger.info("Folders cleaned")
-            os.makedirs(folder_path, exist_ok=True)
-            return STATUS_OK, {"message": "Folders cleaned."}
-        except Exception as e:
-            logger.error(f"Error in clean_folders: {str(e)}")
-            return STATUS_BAD_REQUEST, {"message": str(e)}
-
-    def get_polygon_images(self):
-        """
-        Get the images from the polygon.
-        """
-        status, message = self.integrations.get_images(
-            self.polygon, self.initial_date, self.end_date)
-        logger.info(f"Images downloaded : {message} - {status}")
-
-        if status != STATUS_OK:
-            logger.error(f"Error in get_images: {message}")
-            return message, status
-        status, message = self.integrations.clean_images()
-        logger.info(f"Images cleaned : {message} - {status}")
-
-        return message, status
-
-    def calculate_features(self) -> tuple:
-        """
-        Calculate features for the model polygons.
-        """
-        try:
-            logger.info("Calculating features")
-            base_dir = os.path.join(
-                os.getcwd(),
-                *FOLDERS_DOWNLOAD_NAMES["MAIN"],
-                FOLDERS_DOWNLOAD_NAMES["CLEANED"])
-            for image_folder in os.listdir(base_dir):
-                image_path = os.path.join(base_dir, image_folder)
-
-                band_files = {
-                    os.path.splitext(f)[0]: os.path.join(image_path, f)
-                    for f in os.listdir(image_path)
-                    if f.endswith(".tif")
-                }
-                if band_files:
-                    output_folder = os.path.join(
-                        *FOLDERS_DOWNLOAD_NAMES["MAIN"], FOLDERS_DOWNLOAD_NAMES["FEATURES"], image_folder
-                    )
-                    os.makedirs(output_folder, exist_ok=True)
-                    logger.info("Calculating features")
-                    feature = Feature(band_files, output_folder)
-                    status, message = feature.open_bands()
-                    if status != STATUS_OK:
-                        logger.error(f"Error in open_bands: {message}")
-                        return status, message
-
-                    status, message = feature.calculate_ndvi()
-                    if status != STATUS_OK:
-                        logger.error(f"Error in calculate_ndvi: {message}")
-                    status, message = feature.calculate_ndwi()
-                    if status != STATUS_OK:
-                        logger.error(f"Error in calculate_ndwi: {message}")
-                    status, message = feature.calculate_ndci()
-                    if status != STATUS_OK:
-                        logger.error(f"Error in calculate_ndci: {message}")
-                    status, message = feature.calculate_fdi()
-                    if status != STATUS_OK:
-                        logger.error(f"Error in calculate_fdi: {message}")
-                    status, message = feature.calculate_ndpi()
-                    if status != STATUS_OK:
-                        logger.error(f"Error in calculate_ndpi: {message}")
-            logger.info("Features calculated")
-            return STATUS_OK, {"message": "Features calculated."}
-        except Exception as e:
-            logger.error(f"Error in calculate_features: {str(e)}")
-            return STATUS_BAD_REQUEST, {"message": str(e)}
-
-    def feature_mean(self):
-        """
-        Calculate the mean of the features.
-        """
-        try:
-
-            for ind in FEATURES_LIST:
-                sum_features = 0
-                count = 0
-                base_dir = os.path.join(
-                    os.getcwd(),
-                    *FOLDERS_DOWNLOAD_NAMES["MAIN"],
-                    FOLDERS_DOWNLOAD_NAMES["FEATURES"])
-                output_dir = os.path.join(
-                    os.getcwd(),
-                    *FOLDERS_DOWNLOAD_NAMES["MAIN"],
-                    FOLDERS_DOWNLOAD_NAMES["FEATURES_MEAN"])
-                os.makedirs(output_dir, exist_ok=True)
-
-                for image_folder in os.listdir(base_dir):
-                    image_path = os.path.join(base_dir, image_folder)
-                    raster_path = os.path.join(image_path, f"{ind}.tif")
-
-                    if os.path.exists(raster_path):
-                        with rasterio.open(raster_path) as src:
-                            image = src.read(1).astype(np.uint16)
-                            image[image == src.nodata] = 0
-
-                            if sum_features is None:
-                                sum_features = np.zeros_like(image, dtype=np.uint32)
-
-                            sum_features += image
-                            count += 1
-
-                if count > 0:
-                    mean_feature = (
-                        sum_features /
-                        count).astype(
-                        np.uint16)
-
-                    output_path = os.path.join(output_dir, f"{ind}.tif")
-
-                    with rasterio.open(raster_path) as src:
-                        profile = src.profile.copy()
-
-                    profile.update(
-                        dtype=rasterio.uint16,
-                        count=1,
-                        nodata=0,
-                        driver="GTiff"
-                    )
-                    with rasterio.open(output_path, "w", **profile) as dst:
-                        dst.write(mean_feature, 1)
-                        dst.crs = profile["crs"]
-
-                    logger.info(f"Feature {ind} average calculated")
-            return STATUS_OK, {"message": "Features average calculated."}
-        except Exception as e:
-            logger.error(f"Error in feature_average: {str(e)}")
-            return STATUS_BAD_REQUEST, {"message": str(e)}
-
-    def create_polygons(self):
-        """
-        Create the polygons for the model.
-        """
-        try:
-            logger.info("Creating polygons")
-            status, message = self.integrations.create_polygons_10m(self.coordinates)
+        for step in [
+            predictor.clean_folders,
+            predictor.get_polygon_images,
+            predictor.calculate_features,
+            predictor.feature_mean,
+            predictor.create_polygons,
+            predictor.create_dataset,
+            predictor.predict,
+            predictor.show_map,
+        ]:
+            status, message = step()
             if status != STATUS_OK:
-                logger.error(f"Error in create_polygons: {message}")
-                return status, message
-            logger.info("Polygons created")
-            return STATUS_OK, {"message": "Polygons created."}
-        except Exception as e:
-            logger.error(f"Error in create_polygons: {str(e)}")
-            return STATUS_BAD_REQUEST, {"message": str(e)}
+                raise HTTPException(status_code=status, detail=message)
+        logger.info("Predictor completed successfully.")
+        return JSONResponse(status_code=200, content=message)
 
-    def create_dataset(self):
-        """
-        Create the dataset for the model.
-        """
-        try:
-            logger.info("Creating dataset")
-            # Load the 10m x 10m grid as a GeoDataFrame
-            geojson = os.path.join(
-                os.getcwd(),
-                *FOLDERS_DOWNLOAD_NAMES["MAIN"],
-                FOLDERS_DOWNLOAD_NAMES["POLYGONS"], FILE_GRID)
-
-            with open(geojson, "r", encoding="utf-8") as file:
-                geojson_data = json.load(file)
-
-            polygons = []
-
-            for feature in geojson_data["features"]:
-                # Convert GeoJSON geometry to a Shapely Polygon
-                polygon = shape(feature["geometry"])
-                polygons.append(polygon)
-
-            logger.info(f"Loaded {len(polygons)} polygons from GeoJSON.")
-
-            # Dictionary to store extracted data
-            data = {"polygon_id": [], "geometry": []}  # Store ID and geometry (WKT format)
-
-            # Initialize feature columns in the dataset
-            for ind in FEATURES_LIST:
-                data[ind] = []
-
-            # Iterate over each 10m x 10m polygon and extract feature values
-            for idx, polygon in enumerate(polygons):
-                polygon_id = idx + 1
-                data["polygon_id"].append(polygon_id)
-                data["geometry"].append(polygon.wkt)  # Store as WKT format for reference
-
-                # Extract values from each feature (TIFF file)
-                for ind in FEATURES_LIST:
-                    raster_path = os.path.join(
-                        os.getcwd(),
-                        *FOLDERS_DOWNLOAD_NAMES["MAIN"],
-                        FOLDERS_DOWNLOAD_NAMES["FEATURES_MEAN"], f"{ind}.tif")
-                    if os.path.exists(raster_path):
-                        with rasterio.open(raster_path) as src:
-                            try:
-                                print("crs", src.crs)
-                                # Clip the raster to the cell's polygon area
-                                # Transform polygon to match the raster's CRS
-                                polygon_transformed = transform_geom(
-                                    "EPSG:4326",  # Input CRS (lat/lon)
-                                    src.crs,  # Target CRS (from raster)
-                                    polygon.__geo_interface__,  # Convert Shapely to GeoJSON format
-                                    precision=6  # Adjust precision for better accuracy
-                                )
-
-                                # Use the transformed polygon in mask()
-                                out_image, _ = mask(src, [polygon_transformed], crop=True)
-                                # Remove NoData values and compute the mean
-                                valid_pixels = out_image[out_image != src.nodata]
-                                # Convert values using the scaling formula if there are valid pixels
-                                if valid_pixels.size > 0:
-                                    mean_value = np.nanmean(valid_pixels)
-                                    scaled_value = (
-                                        mean_value / 32767.5) - 1  # Apply scaling formula
-                                else:
-                                    scaled_value = np.nan
-
-                            except Exception as e:
-                                logger.error(f"Error processing {ind} for cell {polygon_id}: {e}")
-                                scaled_value = np.nan
-                    else:
-                        logger.info(f"⚠️ {ind}_mean.tif not found!")
-                        scaled_value = np.nan
-
-                    # Store the computed mean value for the feature
-                    data[ind].append(scaled_value)
-
-            # Convert the extracted data to a Pandas DataFrame
-            df = pd.DataFrame(data)
-            output_csv = os.path.join(
-                os.getcwd(),
-                *FOLDERS_DOWNLOAD_NAMES["MAIN"],
-                FOLDERS_DOWNLOAD_NAMES["DATASET"])
-            os.makedirs(output_csv, exist_ok=True)
-            # Save the dataset as a CSV file
-            df.to_csv(f"{output_csv}/{FILE_DATASET_INDICATORS}", index=False)
-
-            logger.info(f"Dataset successfully saved at: {output_csv}")
-            return STATUS_OK, {"message": "Dataset created."}
-        except Exception as e:
-            logger.error(f"Error in create_dataset: {str(e)}")
-            return STATUS_BAD_REQUEST, {"message": str(e)}
-
-    def predict(self):
-        """
-        Predict the microplastic concentration.
-        """
-        dataset_path = os.path.join(
-            *FOLDERS_DOWNLOAD_NAMES["MAIN"], FOLDERS_DOWNLOAD_NAMES["DATASET"], FILE_DATASET_INDICATORS
-        )
-        models_path = os.path.join(
-            *FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["MODELS"]
-        )
-        model = Models(dataset_path, models_path)
-        status, message = model.load_data()
-
-        if status != STATUS_OK:
-            return status, message
-
-        df = message
-
-        status, message = model.load_models()
-
-        models = model.models
-        scaler = model.scaler
-        X = df[FEATURES_LIST]
-        linear_model = models["Linear Regression"]
-        random_forest = models["Random Forest"]
-        neural_network = models["Neural Network"]
-        X_scaled = scaler.transform(X)
-        df["pred_linear"] = linear_model.predict(X_scaled)
-        df["pred_forest"] = random_forest.predict(X_scaled)
-        df["pred_neural"] = neural_network.predict(X_scaled)
-        output_path = os.path.join(
-            *FOLDERS_DOWNLOAD_NAMES["MAIN"], FOLDERS_DOWNLOAD_NAMES["DATASET"], FILE_DATASET_WITH_PREDICTIONS
-        )
-        df.to_csv(output_path, index=False)
-        return STATUS_OK, {"message": "Predictions saved successfully."}
-
-    def show_map(self):
-        """
-        Show the map with the polygons.
-        """
-        try:
-            # Load the dataset with predictions
-            csv_file = os.path.join(
-                *FOLDERS_DOWNLOAD_NAMES["MAIN"], FOLDERS_DOWNLOAD_NAMES["DATASET"], FILE_DATASET_WITH_PREDICTIONS
-            )
-            df = pd.read_csv(csv_file)
-
-            # Convert the 'geometry' column from WKT to shapely polygons
-            df["geometry"] = df["geometry"].apply(loads)
-
-            # Create a GeoDataFrame with EPSG:4326 CRS (latitude/longitude)
-            gdf = gpd.GeoDataFrame(df, geometry="geometry", crs="EPSG:4326")
-
-            # Center the map based on the dataset's centroid
-            center = gdf.geometry.centroid.unary_union.centroid
-            map_ = folium.Map(location=[center.y, center.x], zoom_start=12, tiles="cartodbpositron")
-
-            # Create a color map based on the forest model predictions
-            colormap = folium.LinearColormap(
-                ["blue", "green", "yellow", "red"],
-                vmin=gdf[BEST_MODEL].min(),
-                vmax=gdf[BEST_MODEL].max()
-            )
-
-            # Add polygons to the map with colors representing microplastic predictions
-            for _, row in gdf.iterrows():
-                folium.GeoJson(
-                    row["geometry"],
-                    style_function=lambda feature, value=row[BEST_MODEL]: {
-                        "fillColor": colormap(value),
-                        "color": "black",
-                        "weight": 0.5,
-                        "fillOpacity": 0.7,
-                    },
-                    tooltip=folium.Tooltip(f"Prediction: {row[BEST_MODEL]:.4f}"),
-                ).add_to(map_)
-
-            # Add the color scale legend to the map
-            colormap.caption = "Microplastic Concentration Prediction"
-            colormap.add_to(map_)
-
-            # Save the map to an HTML file
-            map_file = os.path.join(
-                *FOLDERS_DOWNLOAD_NAMES["MAIN"], FOLDERS_DOWNLOAD_NAMES["DATASET"], FILE_MAP_PREDICTIONS
-            )
-            map_.save(map_file)
-            logger.info(f"Map generated: {map_file}")
-            return STATUS_OK, {"message": "Map saved successfully."}
-        except Exception as e:
-            logger.error(f"Error in show_map: {str(e)}")
-            return STATUS_BAD_REQUEST, {"message": str(e)}
+    except Exception as e:
+        logger.error(f"Error in post PredictorRequest: {e}")
+        raise HTTPException(status_code=STATUS_BAD_REQUEST, detail=f"images download failed: {e}")

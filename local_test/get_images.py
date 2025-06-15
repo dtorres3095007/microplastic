@@ -2,7 +2,7 @@
 from shapely.geometry import shape
 
 from config import setup_logger
-from src.api.predictor.predictor import Predictor
+from entities.machine_learning.predictor import Predictor
 import geopandas as gpd
 
 data = {
