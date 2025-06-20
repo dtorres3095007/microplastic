@@ -3,10 +3,10 @@ from fastapi.responses import JSONResponse
 import logging
 from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
 from src.entities.media_collections.media_collections import MediaCollections
-from src.api.media_collections.docs.media_collections_delete_docs import (
-    summary_media_colllections_delete,
-    description_media_colllections_delete,
-    response_description_media_colllections_delete,
+from src.api.media_collections.media_collections_delete.docs import (
+    summary_media_collections_delete,
+    description_media_collections_delete,
+    response_description_media_collections_delete,
 )
 from src.shared.db_config import DatabaseConnection
 
@@ -15,20 +15,15 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 @router.delete(
     "/{media_id}",
-    summary=summary_media_colllections_delete,
-    description=description_media_colllections_delete,
-    response_description=response_description_media_colllections_delete
+    summary=summary_media_collections_delete,
+    description=description_media_collections_delete,
+    response_description=response_description_media_collections_delete
 )
 async def media_collections_delete(media_id: int):
     try:
         logger.info(f"Received media_collections_delete request for media_id: {media_id}")
         conn = DatabaseConnection()
         media = MediaCollections(conn)
-
-        status, response = media.get_media(media_id=media_id)
-        if status != STATUS_OK:
-            logger.error(f"Media with ID {media_id} not found.")
-            return JSONResponse(status_code=status, content=response)
 
         status, response = media.delete_media(media_id=media_id)
         if status != STATUS_OK:

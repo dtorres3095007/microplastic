@@ -2,12 +2,14 @@ from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
 from src.entities.users.src.queries import UsersQueries
 from src.shared.db_config import DatabaseConnection
 import bcrypt
+from typing import Optional
 
 
 class Users:
     def __init__(self, conn: DatabaseConnection):
         self.users_queries = UsersQueries()
         self.conn = conn
+        self.updated_by = 1
 
     def login_user(self, email: str, password: str) -> tuple:
         """
@@ -15,6 +17,7 @@ class Users:
 
         args:
             email (str): The email of the user.
+            password (str): The password of the user.
 
         Returns:
             tuple: The status code and response message.
@@ -37,13 +40,14 @@ class Users:
 
         return STATUS_OK, {"message": "User authenticated successfully", "user": user}
     
-    def create_user(self, email: str, password: str) -> tuple:
+    def create_user(self, email: str, password: str, profile: str) -> tuple:
         """
         This method will create a new user with the provided email and password.
 
         args:
             email (str): The email of the user.
             password (str): The password of the user.
+            profile (str): The profile of the user. 
 
         Returns:
             tuple: The status code and response message.
@@ -53,6 +57,7 @@ class Users:
         user = self.users_queries.create_user(
             email=email,
             password=hashed_password.decode("utf-8"),
+            profile=profile,
             conn=self.conn,
         )
 
@@ -61,15 +66,23 @@ class Users:
         
         return STATUS_OK, {"message": "User created successfully", "email": email}
     
-    def get_users(self) -> tuple:
+    def get_users(self, limit: int = 10, offset: int = 0, search: Optional[str] = None) -> tuple:
         """
         This method will retrieve the user data.
+
+        args:
+            limit (int): The maximum number of users to retrieve.
+            offset (int): The number of users to skip before starting to collect the result set.
+            search (Optional[str]): A search term to filter users by email.
 
         Returns:
             tuple: The status code and response message.
         """
         user = self.users_queries.get_users(
             conn=self.conn,
+            limit=limit,
+            offset=offset,
+            search=search
         )
 
         if not user:
@@ -97,7 +110,7 @@ class Users:
         
         return STATUS_OK, {"message": "User retrieved successfully", "user": user}
     
-    def patch_user(self, user_id: int, email: str = None, profile: str = None, active: str = None) -> tuple:
+    def patch_user(self, user_id: int, email: str = None, profile: str = None, active: int = None) -> tuple:
         """
         This method will update a user's details.
 
@@ -105,6 +118,8 @@ class Users:
             user_id (int): The ID of the user.
             email (str): The new email of the user.
             password (str): The new password of the user.
+            profile (str): The new profile of the user.
+            active (int): The new active status of the user (1 for active, 0 for inactive).
 
         Returns:
             tuple: The status code and response message.
@@ -118,6 +133,7 @@ class Users:
             profile=profile,
             active=active,
             conn=self.conn,
+            updated_by=self.updated_by
         )
 
         if not user:

@@ -2,12 +2,12 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 import logging
 from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
-from src.api.users.docs.patch_docs import (
+from src.api.users.users_patch.docs import (
     summary_users_patch,
     description_users_patch,
     response_description_users_patch,
 )
-from src.api.users.schema import UserPatchRequestBody
+from src.api.users.users_patch.schema import UserPatchRequestBody
 from src.shared.db_config import DatabaseConnection
 from src.entities.users.users import Users
 

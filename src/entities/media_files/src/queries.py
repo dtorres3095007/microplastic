@@ -3,6 +3,7 @@ from src.shared.db_config import DatabaseConnection
 from src.shared.decorators.query_reader import sql_query_reader
 import os
 from typing import List, Dict
+from datetime import datetime
 
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -56,6 +57,7 @@ class MediaFilesQueries:
         url: str,
         thumbnail_url: Optional[str] = None,
         description: Optional[str] = None,
+        updated_by: Optional[int] = 1,
     ) -> bool:
         """
         This method updates a media file in the database.
@@ -78,7 +80,9 @@ class MediaFilesQueries:
             "title": title,
             "url": url,
             "thumbnail_url": thumbnail_url,
-            "description": description
+            "description": description,
+            "updated_at":  datetime.now(),
+            "updated_by": updated_by,
         }
         resp = conn.execute_update(query, params)
         return resp
@@ -108,6 +112,9 @@ class MediaFilesQueries:
         self,
         conn: DatabaseConnection,
         collection_id: int,
+        limit: int = 10,
+        offset: int = 0,
+        search: Optional[str] = None,
     ) -> List[Dict]:
         """
         This method retrieves all media files for a specific collection from the database.
@@ -119,7 +126,12 @@ class MediaFilesQueries:
             list[dict]: A list of dictionaries containing media file details.
         """
         query: str = self.get_all_media_files.query
-        params = {"collection_id": collection_id}
+        params = {
+            "collection_id": collection_id,
+            "limit": limit,
+            "offset": offset,
+            "search": search if search else None,
+            }
         resp = conn.execute_query(query, params)
         return resp
     

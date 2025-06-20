@@ -1,7 +1,8 @@
 from fastapi import APIRouter
+from src.api.media_collections.media_collections_get_all import media_collections_get_all
 from src.api.media_collections.media_collections_post import media_collections_post
 from src.api.media_collections.media_collections_patch import media_collections_patch
-from src.api.media_collections.media_collections_get import media_collections_get, media_collections_get_all
+from src.api.media_collections.media_collections_get import media_collections_get
 from src.api.media_collections.media_collections_delete import media_collections_delete
 
 

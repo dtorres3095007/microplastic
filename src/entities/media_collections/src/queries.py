@@ -3,6 +3,7 @@ from src.shared.db_config import DatabaseConnection
 from src.shared.decorators.query_reader import sql_query_reader
 import os
 from datetime import date
+from datetime import datetime
 
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -65,6 +66,9 @@ class MediaCollectionsQueries:
     def get_all_media(
         self,
         conn: DatabaseConnection,
+        limit: int,
+        offset: int,
+        search: Optional[str] = None,
     ) -> Optional[list]:
         """
         This method retrieves all media from the database.
@@ -76,7 +80,12 @@ class MediaCollectionsQueries:
             Optional[list]: A list of all media if found, None otherwise.
         """
         query: str = self.get_all_media.query
-        resp = conn.execute_query(query)
+        params = {
+            "limit": limit,
+            "offset": offset,
+            "search": search if search else None,
+        }
+        resp = conn.execute_query(query, params)
         return resp
     
     @sql_query_reader(base_dir, "delete_media.sql")
@@ -110,6 +119,7 @@ class MediaCollectionsQueries:
         description: str,
         date: date,
         conn: DatabaseConnection,
+        updated_by: int = 1,
     ) -> Optional[int]:
         """
         This method updates media details in the database.
@@ -130,7 +140,8 @@ class MediaCollectionsQueries:
             "title": title,
             "description": description,
             "date": date,
-            "updated_by": 1,
+            "updated_at": datetime.now(),
+            "updated_by": updated_by,
         }
         resp = conn.execute_update(query, params)
         return resp

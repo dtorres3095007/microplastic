@@ -66,6 +66,9 @@ class UsersQueries:
     def get_users(
         self,
         conn: DatabaseConnection,
+        limit: int,
+        offset: int,
+        search: Optional[str] = None,
     ) -> Optional[dict]:
         """
         This method will retrieve a user by their ID.
@@ -78,7 +81,12 @@ class UsersQueries:
             None: If no user is found with the given ID.
         """
         query: str = self.get_users.query
-        resp = conn.execute_query(query)
+        params = {
+            "limit": limit,
+            "offset": offset,
+            "search": search if search else None,
+        }
+        resp = conn.execute_query(query, params)
         return resp
     
     @sql_query_reader(base_dir, "users_get_by_id.sql")
@@ -113,6 +121,7 @@ class UsersQueries:
         profile: str,
         active: str,
         conn: DatabaseConnection,
+        updated_by: int = 1,
     ) -> Optional[dict]:
         """
         This method will update a user by their ID.
@@ -131,6 +140,7 @@ class UsersQueries:
             "profile": profile,
             "active": active,
             "updated_at": datetime.now(),
+            "updated_by": updated_by,
         }
         resp = conn.execute_update(query, params)
         return resp

@@ -2,12 +2,12 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 import logging
 from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
-from src.api.users.docs.post_docs import (
+from src.api.users.users_post.docs import (
     summary_create,
     description_create,
     response_description_create,
 )
-from src.api.users.schema import UserRequestBody
+from src.api.users.users_post.schema import UserRequestBody
 from src.shared.db_config import DatabaseConnection
 from src.entities.users.users import Users
 
@@ -30,6 +30,7 @@ async def users_create_post(data: UserRequestBody):
         status, message =user.create_user(
             email=data.email,
             password=data.password,
+            profile=data.profile
         )
 
         if status != STATUS_OK:

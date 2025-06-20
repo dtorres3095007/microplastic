@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 import logging
 from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
 from src.entities.media_files.media_files import MediaFiles
-from src.api.media_files.docs.media_files_delete_docs import (
+from src.api.media_files.media_files_delete.docs import (
     summary_media_files_delete,
     description_media_files_delete,
     response_description_media_files_delete,

@@ -3,11 +3,11 @@ from fastapi.responses import JSONResponse
 import logging
 from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
 from src.entities.media_collections.media_collections import MediaCollections
-from src.api.media_collections.schema import MediaCollectionRequestBody
-from src.api.media_collections.docs.media_collections_post_docs import (
-    summary_media_colllections_post,
-    description_media_colllections_post,
-    response_description_media_colllections_post,
+from src.api.media_collections.media_collections_post.schema import MediaCollectionRequestBody
+from src.api.media_collections.media_collections_post.docs import (
+    summary_media_collections_post,
+    description_media_collections_post,
+    response_description_media_collections_post,
 )
 from src.shared.db_config import DatabaseConnection
 
@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 
 @router.post(
     "/create",
-    summary=summary_media_colllections_post,
-    description=description_media_colllections_post,
-    response_description=response_description_media_colllections_post
+    summary=summary_media_collections_post,
+    description=description_media_collections_post,
+    response_description=response_description_media_collections_post
 )
 async def media_collections_post(data: MediaCollectionRequestBody):
     try:

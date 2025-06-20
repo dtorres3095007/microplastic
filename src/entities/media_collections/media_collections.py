@@ -2,12 +2,14 @@ from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
 from src.entities.media_collections.src.queries import MediaCollectionsQueries
 from src.shared.db_config import DatabaseConnection
 from datetime import date
+from typing import Optional
 
 
 class MediaCollections:
     def __init__(self, conn: DatabaseConnection):
         self.media_queries = MediaCollectionsQueries()
         self.conn = conn
+        self.updated_by = 1
 
     def insert_media(self, title: str, description: str = None, date: date = None) -> tuple:
         """
@@ -49,14 +51,23 @@ class MediaCollections:
 
         return STATUS_OK, media_details
     
-    def get_all_media(self) -> tuple:
+    def get_all_media(self, limit: int = 10, offset: int = 0, search: Optional[str] = None) -> tuple:
         """
         This method retrieves all media collections from the database.
+
+        Args:
+            limit (int): The maximum number of media collections to retrieve.
+            offset (int): The number of media collections to skip before starting to collect the result set.
+            search (Optional[str]): A search term to filter media collections by title or description.
+
         Returns:
             tuple: A tuple containing the status code and a list of all media collections or an error message.
         """
         all_media = self.media_queries.get_all_media(
             conn=self.conn,
+            limit=limit,
+            offset=offset,
+            search=search
         )
 
         if not all_media:
@@ -72,6 +83,10 @@ class MediaCollections:
         Returns:
             tuple: A tuple containing the status code and a message.
         """
+        status, response = self.get_media(media_id=media_id)
+        if status != STATUS_OK:
+            return STATUS_BAD_REQUEST, {"message": "Media not found"}
+
         deleted_media = self.media_queries.delete_media(
             media_id=media_id,
             conn=self.conn,
@@ -93,12 +108,19 @@ class MediaCollections:
         Returns:
             tuple: A tuple containing the status code and a message.
         """
+
+        status, message = self.get_media(media_id=media_id)
+
+        if status != STATUS_OK:
+            return STATUS_BAD_REQUEST, {"message": "Media not found"}
+
         updated_media = self.media_queries.update_media(
             media_id=media_id,
             title=title,
             description=description,
             date=date,
             conn=self.conn,
+            updated_by=self.updated_by
         )
 
         if not updated_media:
