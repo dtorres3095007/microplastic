@@ -1,9 +1,11 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 import logging
 from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
 from src.entities.media_collections.media_collections import MediaCollections
-from src.api.media_collections.media_collections_post.schema import MediaCollectionRequestBody
+from src.api.media_collections.media_collections_post.schema import (
+    MediaCollectionRequestBody,
+)
 from src.api.media_collections.media_collections_post.docs import (
     summary_media_collections_post,
     description_media_collections_post,
@@ -15,28 +17,47 @@ from src.shared.db_config import DatabaseConnection
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 @router.post(
     "/create",
     summary=summary_media_collections_post,
     description=description_media_collections_post,
-    response_description=response_description_media_collections_post
+    response_description=response_description_media_collections_post,
 )
-async def media_collections_post(data: MediaCollectionRequestBody):
+async def media_collections_post(
+    form: MediaCollectionRequestBody = Depends(MediaCollectionRequestBody.as_form),
+):
     try:
-        logger.info(f"Received media_collections_post request with data: {data}")
+        logger.info(f"Received media_collections_post request with data: {form}")
         conn = DatabaseConnection()
         media = MediaCollections(conn)
 
         status, message = media.insert_media(
-            title=data.title,
-            description=data.description,
-            date=data.date
+            title=form.title,
+            summary=form.summary,
+            content=form.content,
+            media_type=form.media_type,
+            file_content=await form.file.read() if form.file else None,
+            original_filename=form.file.filename if form.file else None,
+            thumbnail_content=(
+                await form.thumbnail_url.read() if form.thumbnail_url else None
+            ),
+            thumbnail_filename=(
+                form.thumbnail_url.filename if form.thumbnail_url else None
+            ),
+            published_at=form.published_at,
+            status=form.status,
         )
+
         if status != STATUS_OK:
             return JSONResponse(status_code=status, content=message)
-        logger.info("Media completed successfully.")
+
+        logger.info("Media inserted successfully.")
         return JSONResponse(status_code=200, content=message)
 
     except Exception as e:
         logger.error(f"Error in post MediaCollectionsPost: {e}")
-        raise HTTPException(status_code=STATUS_BAD_REQUEST, detail=f"images download failed: {e}")
+        raise HTTPException(
+            status_code=STATUS_BAD_REQUEST,
+            detail=f"Media insertion failed: {e}",
+        )

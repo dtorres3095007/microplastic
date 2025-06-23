@@ -29,17 +29,17 @@ class Users:
 
         if not user:
             return STATUS_BAD_REQUEST, {"message": "Invalid email or password"}
-        
+
         stored_password = user[0]["password"].encode("utf-8")
         provided_password = password.encode("utf-8")
 
         if not bcrypt.checkpw(provided_password, stored_password):
             return STATUS_BAD_REQUEST, {"message": "Invalid email or password"}
-        
+
         del user[0]["password"]
 
         return STATUS_OK, {"message": "User authenticated successfully", "user": user}
-    
+
     def create_user(self, email: str, password: str, profile: str) -> tuple:
         """
         This method will create a new user with the provided email and password.
@@ -47,13 +47,13 @@ class Users:
         args:
             email (str): The email of the user.
             password (str): The password of the user.
-            profile (str): The profile of the user. 
+            profile (str): The profile of the user.
 
         Returns:
             tuple: The status code and response message.
         """
         hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-        
+
         user = self.users_queries.create_user(
             email=email,
             password=hashed_password.decode("utf-8"),
@@ -63,10 +63,10 @@ class Users:
 
         if not user:
             return STATUS_BAD_REQUEST, {"message": "User creation failed"}
-        
+
         return STATUS_OK, {"message": "User created successfully", "email": email}
-    
-    def get_users(self, limit: int = 10, offset: int = 0, search: Optional[str] = None) -> tuple:
+
+    def get_users(self, limit: int, offset: int, search: Optional[str]) -> tuple:
         """
         This method will retrieve the user data.
 
@@ -79,17 +79,14 @@ class Users:
             tuple: The status code and response message.
         """
         user = self.users_queries.get_users(
-            conn=self.conn,
-            limit=limit,
-            offset=offset,
-            search=search
+            conn=self.conn, limit=limit, offset=offset, search=search
         )
 
         if not user:
             return STATUS_BAD_REQUEST, {"message": "User not found"}
-        
+
         return STATUS_OK, {"message": "User retrieved successfully", "user": user}
-    
+
     def get_user_by_id(self, user_id: int) -> tuple:
         """
         This method will retrieve a user by their ID.
@@ -107,10 +104,10 @@ class Users:
 
         if not user:
             return STATUS_BAD_REQUEST, {"message": "User not found"}
-        
+
         return STATUS_OK, {"message": "User retrieved successfully", "user": user}
-    
-    def patch_user(self, user_id: int, email: str = None, profile: str = None, active: int = None) -> tuple:
+
+    def patch_user(self, user_id: int, email: str, profile: str, active: int) -> tuple:
         """
         This method will update a user's details.
 
@@ -124,8 +121,10 @@ class Users:
         Returns:
             tuple: The status code and response message.
         """
-        if not email:
-            return STATUS_BAD_REQUEST, {"message": "No fields to update"}
+
+        status, message = self.get_user_by_id(user_id=user_id)
+        if status != STATUS_OK:
+            return status, message
 
         user = self.users_queries.patch_user(
             user_id=user_id,
@@ -133,11 +132,10 @@ class Users:
             profile=profile,
             active=active,
             conn=self.conn,
-            updated_by=self.updated_by
+            updated_by=self.updated_by,
         )
 
         if not user:
             return STATUS_BAD_REQUEST, {"message": "User update failed"}
-        
+
         return STATUS_OK, {"message": "User updated successfully", "user": user}
-    

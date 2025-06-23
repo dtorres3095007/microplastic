@@ -14,13 +14,13 @@ from src.entities.users.users import Users
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 @router.get(
     "/{user_id}",
     summary=summary_user_get,
     description=description_user_get,
-    response_description=response_description_user_get
+    response_description=response_description_user_get,
 )
-
 async def user_get(user_id: int):
     try:
         logger.info("Received user_get request")
@@ -31,16 +31,11 @@ async def user_get(user_id: int):
 
         if status != STATUS_OK:
             return JSONResponse(
-                status_code=status,
-                content={"message": message['message']}
+                status_code=status, content={"message": message["message"]}
             )
 
-        return JSONResponse(
-            status_code=STATUS_OK,
-            content=message
-        )
+        return JSONResponse(status_code=STATUS_OK, content=message)
 
     except Exception as e:
         logger.error(f"Error in get UserGet: {e}")
         raise HTTPException(status_code=STATUS_BAD_REQUEST, detail=f"Get failed: {e}")
-    

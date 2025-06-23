@@ -15,6 +15,7 @@ from src.api.media_collections.media_collections_get.schema import MediaDetailsR
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 @router.get(
     "/{media_id}",
     summary=summary_media_collections_get,
@@ -31,14 +32,16 @@ async def media_collections_get(media_id: int):
 
         status, media_details = media.get_media(media_id=media_id)
         if status != STATUS_OK:
-            return  JSONResponse(
+            return JSONResponse(
                 status_code=STATUS_NOT_FOUND,
                 content=media_details,
             )
+
         logger.info("Media retrieved successfully.")
         return MediaDetailsResponse(**media_details[0])
 
     except Exception as e:
         logger.error(f"Error in MediaCollectionsGet: {e}")
-        raise HTTPException(status_code=STATUS_BAD_REQUEST, detail=f"Media retrieval failed: {e}")
-    
+        raise HTTPException(
+            status_code=STATUS_BAD_REQUEST, detail=f"Media retrieval failed: {e}"
+        )

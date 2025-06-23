@@ -1,4 +1,5 @@
-SELECT collection_id, 
+SELECT
+    id,
 	type, 
 	title, 
 	url, 

@@ -1,6 +1,5 @@
 INSERT INTO media_files 
 	(
-	collection_id, 
 	type, 
 	title, 
 	url, 
@@ -10,7 +9,6 @@ INSERT INTO media_files
 	)
 	VALUES
 	(
-	%(collection_id)s,
     %(type)s,
     %(title)s,
     %(url)s,

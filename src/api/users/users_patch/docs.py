@@ -6,5 +6,5 @@ description_users_patch = (
 )
 
 response_description_users_patch = (
-    "Returns the updated details of the user."
+    "Returns the status 200 if successful, or an error message if the update fails."
 )

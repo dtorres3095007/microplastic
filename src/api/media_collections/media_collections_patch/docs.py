@@ -6,5 +6,5 @@ description_media_collections_patch = (
 )
 
 response_description_media_collections_patch = (
-    "Returns the updated media collection details if successful, or an error message if the update fails."
+    "Returns the status 200 if successful, or an error message if the update fails."
 )

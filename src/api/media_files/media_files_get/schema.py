@@ -1,16 +1,18 @@
 from pydantic import BaseModel, validator
 import os
+from typing import Optional
 
 
 BASE_URL = os.getenv("MEDIA_BASE_URL")
+
 
 class MediaFileOut(BaseModel):
     id: int
     title: str
     type: str
     url: str
-    thumbnail_url: str | None = None
-    description: str | None = None
+    thumbnail_url: Optional[str]
+    description: Optional[str]
 
     @validator("url", "thumbnail_url", pre=True, always=True)
     def add_base_url(cls, v):

@@ -2,8 +2,10 @@ from src.shared.db_config import DatabaseConnection
 from src.shared.decorators.query_reader import sql_query_reader
 import os
 from typing import Optional
-base_dir = os.path.dirname(os.path.abspath(__file__))
 from datetime import datetime
+
+
+base_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 class UsersQueries:
@@ -31,7 +33,7 @@ class UsersQueries:
         }
         resp = conn.execute_query(query, params)
         return resp
-    
+
     @sql_query_reader(base_dir, "users_create_post.sql")
     def create_user(
         self,
@@ -61,14 +63,14 @@ class UsersQueries:
         }
         resp = conn.execute_update(query, params)
         return resp
-    
+
     @sql_query_reader(base_dir, "users_get.sql")
     def get_users(
         self,
         conn: DatabaseConnection,
         limit: int,
         offset: int,
-        search: Optional[str] = None,
+        search: Optional[str],
     ) -> Optional[dict]:
         """
         This method will retrieve a user by their ID.
@@ -88,7 +90,7 @@ class UsersQueries:
         }
         resp = conn.execute_query(query, params)
         return resp
-    
+
     @sql_query_reader(base_dir, "users_get_by_id.sql")
     def get_user_by_id(
         self,
@@ -112,7 +114,7 @@ class UsersQueries:
         }
         resp = conn.execute_query(query, params)
         return resp
-    
+
     @sql_query_reader(base_dir, "users_patch.sql")
     def patch_user(
         self,
@@ -144,4 +146,3 @@ class UsersQueries:
         }
         resp = conn.execute_update(query, params)
         return resp
-    

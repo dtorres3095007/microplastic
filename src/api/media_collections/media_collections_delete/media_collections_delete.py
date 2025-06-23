@@ -13,26 +13,31 @@ from src.shared.db_config import DatabaseConnection
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
 @router.delete(
     "/{media_id}",
     summary=summary_media_collections_delete,
     description=description_media_collections_delete,
-    response_description=response_description_media_collections_delete
+    response_description=response_description_media_collections_delete,
 )
 async def media_collections_delete(media_id: int):
     try:
-        logger.info(f"Received media_collections_delete request for media_id: {media_id}")
+        logger.info(
+            f"Received media_collections_delete request for media_id: {media_id}"
+        )
         conn = DatabaseConnection()
         media = MediaCollections(conn)
 
         status, response = media.delete_media(media_id=media_id)
         if status != STATUS_OK:
             return JSONResponse(status_code=status, content=response)
-        
+
         logger.info("Media deleted successfully.")
         return JSONResponse(status_code=200, content=response)
 
     except Exception as e:
         logger.error(f"Error in MediaCollectionsDelete: {e}")
-        raise HTTPException(status_code=STATUS_BAD_REQUEST, detail=f"Media deletion failed: {e}")
-    
+        raise HTTPException(
+            status_code=STATUS_BAD_REQUEST, detail=f"Media deletion failed: {e}"
+        )
