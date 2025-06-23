@@ -22,9 +22,6 @@ class Forum:
         Returns:
             tuple: A tuple containing the status code and a message.
         """
-        if not content:
-            return STATUS_BAD_REQUEST, "Content cannot be empty."
-
         resp = self.forum_queries.insert_forum(content, author_name, self.conn)
         if resp is None:
             return STATUS_BAD_REQUEST, "Failed to insert forum post."
