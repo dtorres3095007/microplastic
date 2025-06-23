@@ -1,0 +1,24 @@
+INSERT INTO media_collections 
+	(
+	title, 
+	summary, 
+	content, 
+	media_type, 
+	media_url, 
+	thumbnail_url, 
+	published_at, 
+	status,
+	created_by
+	)
+	VALUES
+	(
+	%(title)s, 
+	%(summary)s, 
+	%(content)s, 
+	%(media_type)s,
+	%(media_url)s, 
+	%(thumbnail_url)s, 
+	%(published_at)s, 
+	%(status)s,
+	%(created_by)s
+	);
