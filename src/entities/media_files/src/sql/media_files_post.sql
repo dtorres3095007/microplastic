@@ -4,8 +4,7 @@ INSERT INTO media_files
 	title, 
 	url, 
 	thumbnail_url, 
-	description,
-	uploaded_by
+	description
 	)
 	VALUES
 	(
@@ -13,7 +12,6 @@ INSERT INTO media_files
     %(title)s,
     %(url)s,
     %(thumbnail_url)s,
-    %(description)s,
-    %(uploaded_by)s
+    %(description)s
 	);
 	

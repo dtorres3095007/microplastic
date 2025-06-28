@@ -11,8 +11,6 @@ class MediaCollections:
     def __init__(self, conn: DatabaseConnection):
         self.media_queries = MediaCollectionsQueries()
         self.conn = conn
-        self.created_by = 1
-        self.updated_by = 1
         self.MEDIA_DIR = "media/media_collections"
 
     def _save_file(self, content: bytes, filename: str) -> str:
@@ -77,7 +75,6 @@ class MediaCollections:
             thumbnail_url=thumbnail_url,
             published_at=published_at,
             status=status,
-            created_by=self.created_by,
             conn=self.conn,
         )
 
@@ -205,7 +202,6 @@ class MediaCollections:
             thumbnail_url=thumbnail_url,
             published_at=published_at,
             status=status,
-            updated_by=self.updated_by,
             conn=self.conn,
         )
 

@@ -8,8 +8,7 @@ UPDATE media_collections
 	thumbnail_url = %(thumbnail_url)s, 
 	published_at = %(published_at)s, 
 	status = %(status)s,
-	updated_at = %(updated_at)s,
-	updated_by = %(updated_by)s
+	updated_at = %(updated_at)s
 	WHERE
 	id = %(media_id)s;
     

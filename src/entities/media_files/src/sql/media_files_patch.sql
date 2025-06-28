@@ -5,8 +5,7 @@ UPDATE media_files
 	url = %(url)s,
 	thumbnail_url = %(thumbnail_url)s,
 	description = %(description)s,
-	uploaded_at = %(uploaded_at)s,
-	uploaded_by = %(uploaded_by)s
+	uploaded_at = %(uploaded_at)s
 	WHERE
 	id = %(id)s ;
 	
