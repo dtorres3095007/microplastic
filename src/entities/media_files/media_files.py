@@ -10,7 +10,6 @@ class MediaFiles:
     def __init__(self, conn: DatabaseConnection):
         self.media_queries = MediaFilesQueries()
         self.conn = conn
-        self.uploaded_by = 1
         self.MEDIA_DIR = "media/media_files"
 
     def _save_file(self, content: bytes, filename: str) -> str:
@@ -73,7 +72,6 @@ class MediaFiles:
             url=url,
             thumbnail_url=thumbnail_url,
             description=description,
-            uploaded_by=self.uploaded_by,
             conn=self.conn,
         )
 
@@ -138,7 +136,6 @@ class MediaFiles:
             url=url,
             thumbnail_url=thumbnail_url,
             description=description,
-            uploaded_by=self.uploaded_by,
         )
 
         if not updated:

@@ -20,7 +20,9 @@ class MediaCollectionRequestBody(BaseModel):
         title: str = Form(..., description="Title of the media collection"),
         summary: str = Form(..., description="Summary of the media collection"),
         content: str = Form(..., description="Content of the media collection"),
-        media_type: str = Form(..., description="Type of the media collection"),
+        media_type: str = Form(
+            ..., description="Type of the media collection (image, video, word, pdf)"
+        ),
         file: UploadFile = File(..., description="Media file to be uploaded"),
         thumbnail_url: Optional[UploadFile] = File(
             None, description="Optional thumbnail image for the media collection"

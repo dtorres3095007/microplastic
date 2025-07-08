@@ -25,7 +25,7 @@ class MediaCollectionRequestBody(BaseModel):
             None, description="Content of the media collection"
         ),
         media_type: Optional[str] = Form(
-            None, description="Type of the media collection"
+            None, description="Type of the media collection (image, video, word, pdf)"
         ),
         file: Optional[UploadFile] = File(
             None, description="Media file to be uploaded"

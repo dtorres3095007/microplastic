@@ -18,7 +18,6 @@ class MediaFilesQueries:
         url: str,
         thumbnail_url: str,
         description: str,
-        uploaded_by: int,
         conn: DatabaseConnection,
     ) -> Optional[int]:
         """
@@ -41,7 +40,6 @@ class MediaFilesQueries:
             "url": url,
             "thumbnail_url": thumbnail_url,
             "description": description,
-            "uploaded_by": uploaded_by,
         }
         resp = conn.execute_update(query, params)
         return resp
@@ -56,7 +54,6 @@ class MediaFilesQueries:
         url: str,
         thumbnail_url: Optional[str],
         description: Optional[str],
-        uploaded_by: int,
     ) -> bool:
         """
         This method updates a media file in the database.
@@ -81,7 +78,6 @@ class MediaFilesQueries:
             "thumbnail_url": thumbnail_url if thumbnail_url else None,
             "description": description,
             "uploaded_at": datetime.now(),
-            "uploaded_by": uploaded_by,
         }
         resp = conn.execute_update(query, params)
         return resp

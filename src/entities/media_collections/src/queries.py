@@ -21,7 +21,6 @@ class MediaCollectionsQueries:
         thumbnail_url: Optional[str],
         published_at: Optional[date],
         status: str,
-        created_by: int,
         conn: DatabaseConnection,
     ) -> Optional[int]:
         """
@@ -36,7 +35,6 @@ class MediaCollectionsQueries:
             thumbnail_url (Optional[str]): The URL of the thumbnail image.
             published_at (Optional[date]): The date the media was published.
             status (str): The status of the media (e.g., active, inactive).
-            created_by (int): The ID of the user who created the media.
             conn (DatabaseConnection): The database connection object.
 
         Returns:
@@ -52,7 +50,6 @@ class MediaCollectionsQueries:
             "thumbnail_url": thumbnail_url,
             "published_at": published_at,
             "status": status,
-            "created_by": created_by,
         }
         resp = conn.execute_update(query, params)
         return resp
@@ -139,7 +136,6 @@ class MediaCollectionsQueries:
         thumbnail_url: Optional[str],
         published_at: Optional[date],
         status: str,
-        updated_by: int,
         conn: DatabaseConnection,
     ) -> Optional[int]:
         """
@@ -155,7 +151,6 @@ class MediaCollectionsQueries:
             thumbnail_url (Optional[str]): The new URL of the thumbnail image.
             published_at (Optional[date]): The new date the media was published.
             status (str): The new status of the media (e.g., active, inactive).
-            updated_by (int): The ID of the user who updated the media.
             conn (DatabaseConnection): The database connection object.
 
         Returns:
@@ -173,7 +168,6 @@ class MediaCollectionsQueries:
             "published_at": published_at,
             "status": status,
             "updated_at": datetime.now(),
-            "updated_by": updated_by,
         }
         resp = conn.execute_update(query, params)
         return resp

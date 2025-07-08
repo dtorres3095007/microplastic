@@ -7,8 +7,7 @@ INSERT INTO media_collections
 	media_url, 
 	thumbnail_url, 
 	published_at, 
-	status,
-	created_by
+	status
 	)
 	VALUES
 	(
@@ -19,6 +18,5 @@ INSERT INTO media_collections
 	%(media_url)s, 
 	%(thumbnail_url)s, 
 	%(published_at)s, 
-	%(status)s,
-	%(created_by)s
+	%(status)s
 	);
