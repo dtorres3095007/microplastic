@@ -31,7 +31,7 @@ api_key_header = APIKeyHeader(name=API_KEY_NAME)
 @require_api_key
 async def forum_post(
     request: Request,
-    form: ForumPostForm = Depends(ForumPostForm.as_form),
+    form: ForumPostForm,
     _: str = Security(api_key_header),
 ):
     try:
