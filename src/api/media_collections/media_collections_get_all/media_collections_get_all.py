@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request, Security
 from fastapi.responses import JSONResponse
 import logging
 from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
@@ -14,10 +14,16 @@ from src.api.media_collections.media_collections_get_all.schema import (
     MediaCollectionsRequest,
 )
 from typing import List
+from src.shared.decorators.api_key_guard import require_api_key
+from fastapi.security import APIKeyHeader
+import os
 
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+API_KEY_NAME = os.getenv("API_KEY_NAME")
+api_key_header = APIKeyHeader(name=API_KEY_NAME)
 
 
 @router.get(
@@ -28,7 +34,12 @@ logger = logging.getLogger(__name__)
     response_model=List[MediaDetailsResponse],
     status_code=STATUS_OK,
 )
-async def media_collections_get_all(query: MediaCollectionsRequest = Depends()):
+@require_api_key
+async def media_collections_get_all(
+    request: Request,
+    query: MediaCollectionsRequest = Depends(),
+    _: str = Security(api_key_header),
+):
     try:
         logger.info("Received media_collections_get_all request")
         conn = DatabaseConnection()

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request, Security
 from fastapi.responses import JSONResponse
 import logging
 from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
@@ -10,12 +10,16 @@ from src.api.media_files.media_files_post.docs import (
 )
 from src.shared.db_config import DatabaseConnection
 from src.api.media_files.media_files_post.schema import MediaFilePostForm
+from src.shared.decorators.api_key_guard import require_api_key
+from fastapi.security import APIKeyHeader
+import os
 
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-MEDIA_DIR = "media/media_files"
+API_KEY_NAME = os.getenv("API_KEY_NAME")
+api_key_header = APIKeyHeader(name=API_KEY_NAME)
 
 
 @router.post(
@@ -24,8 +28,11 @@ MEDIA_DIR = "media/media_files"
     description=description_media_files_post,
     response_description=response_description_media_files_post,
 )
+@require_api_key
 async def media_files_post(
+    request: Request,
     form: MediaFilePostForm = Depends(MediaFilePostForm.as_form),
+    _: str = Security(api_key_header),
 ):
     try:
         logger.info(f"Received media_files_post request with data: {form}")
