@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request, Security
 import logging
 from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
 from src.api.forum.forum_get_all.docs import (
@@ -13,10 +13,16 @@ from src.api.forum.forum_get_all.schema import (
     ForumGetAllResponse,
 )
 from typing import List
+from src.shared.decorators.api_key_guard import require_api_key
+from fastapi.security import APIKeyHeader
+import os
 
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+API_KEY_NAME = os.getenv("API_KEY_NAME")
+api_key_header = APIKeyHeader(name=API_KEY_NAME)
 
 
 @router.get(
@@ -26,7 +32,12 @@ logger = logging.getLogger(__name__)
     response_description=response_description_forum_get_all,
     response_model=List[ForumGetAllResponse],
 )
-async def forum_get_all(query: ForumGetAllQueryParams = Depends()):
+@require_api_key
+async def forum_get_all(
+    request: Request,
+    query: ForumGetAllQueryParams = Depends(),
+    _: str = Security(api_key_header),
+):
     try:
         logger.info("Received forum_get_all request")
         conn = DatabaseConnection()

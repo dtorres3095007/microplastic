@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request, Security
 from fastapi.responses import JSONResponse
 import logging
 from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
@@ -12,10 +12,16 @@ from src.api.media_collections.media_collections_patch.docs import (
     response_description_media_collections_patch,
 )
 from src.shared.db_config import DatabaseConnection
+from src.shared.decorators.api_key_guard import require_api_key
+from fastapi.security import APIKeyHeader
+import os
 
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+API_KEY_NAME = os.getenv("API_KEY_NAME")
+api_key_header = APIKeyHeader(name=API_KEY_NAME)
 
 
 @router.patch(
@@ -24,9 +30,12 @@ logger = logging.getLogger(__name__)
     description=description_media_collections_patch,
     response_description=response_description_media_collections_patch,
 )
+@require_api_key
 async def media_collections_patch(
     media_id: int,
+    request: Request,
     form: MediaCollectionRequestBody = Depends(MediaCollectionRequestBody.as_form),
+    _: str = Security(api_key_header),
 ):
     try:
         logger.info(f"Received media_collections_patch request with data: {form}")
