@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Request, Security
+from fastapi import APIRouter, HTTPException, Request, Security
 from fastapi.responses import JSONResponse
 import logging
 from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
