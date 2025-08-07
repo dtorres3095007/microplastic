@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -30,7 +32,9 @@ class DatabaseConnection:
                 database=self.db_database,
                 port=self.db_port,
             )
-            logger.info("Connection pool created successfully with size %d", self.pool_size)
+            logger.info(
+                "Connection pool created successfully with size %d", self.pool_size
+            )
         except Error as err:
             logger.error("Error initializing the connection pool: %s", err)
 
@@ -118,4 +122,28 @@ class DatabaseConnection:
             return False
         finally:
             self.close(connection, cursor)
-            
+
+    def executemany_insert(self, query, batch):
+        """
+        Executes an INSERT query with multiple rows of data.
+
+        Args:
+            query (str): The SQL query to be executed.
+            batch (list): A list of tuples containing the data to be inserted.
+
+        Returns:
+            bool: True if the insertion was successful, False otherwise.
+        """
+        connection, cursor = self.connect()
+        if not connection or not cursor:
+            return False
+        try:
+            cursor.executemany(query, batch)
+            connection.commit()
+            logger.info("Batch insert executed and committed successfully: %s", query)
+            return True
+        except Error as err:
+            logger.error("Error executing batch insert: %s", err)
+            return False
+        finally:
+            self.close(connection, cursor)

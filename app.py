@@ -4,6 +4,7 @@ from src.api.predictor import predictor
 from src.api.media_collections.router import router as media_collections_router
 from src.api.media_files.router import router as media_files_router
 from src.api.forum.router import router as forum_router
+from src.api.microplastic_zones.router import router as microplastic_zones_router
 from config import setup_logger
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -31,6 +32,11 @@ app.include_router(
 )
 app.include_router(media_files_router, prefix="/media_files", tags=["media_files"])
 app.include_router(forum_router, prefix="/forum", tags=["forum"])
+app.include_router(
+    microplastic_zones_router,
+    prefix="/microplastic_zones",
+    tags=["microplastic_zones"],
+)
 
 if __name__ == "__main__":
     import uvicorn
