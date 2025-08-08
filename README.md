@@ -10,17 +10,24 @@ Antes de comenzar, asegúrate de tener instalado:
 
 - [Docker](https://www.docker.com/)
 - [Docker Compose](https://docs.docker.com/compose/)
+- [Mysql](https://www.mysql.com/)
 
-Por otro lado, debes tener una cuenta en https://identity.dataspace.copernicus.eu/ para poder configurar las variables de entorno COPERNICUS_USER y COPERNICUS_PASSWORD.
+Por otro lado, debes tener una cuenta en:
+
+- [copernicus](https://identity.dataspace.copernicus.eu/)
+
+Las credenciales creadas deben ser cargadas en las variables de entorno COPERNICUS_USER y COPERNICUS_PASSWORD. 
 
 ---
 
-### 2️⃣ Clonar el repositorio
+### 2️⃣ Clonar el repositorio e importar base de datos
 
 ```bash
 git clone https://github.com/dtorres3095007/microplastic.git
 cd microplastic
 ```
+
+La base de datos compartida debe ser importada con el administrador de base de datos de preferencia y configurar las credenciales utilizadas en los archivos docker compose y .env.
 
 ### 3️⃣ Levantar los servicios con Docker
 
