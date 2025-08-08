@@ -11,11 +11,11 @@ def trainer_request():
         trainer = Trainer()
 
         for step in [
-            # trainer.get_model_images,
-            # trainer.clean_model_images,
-            # trainer.calculate_features,
-            # trainer.create_dataset,
-            # trainer.train_models,
+            trainer.get_model_images,
+            trainer.clean_model_images,
+            trainer.calculate_features,
+            trainer.create_dataset,
+            trainer.train_models,
             trainer.evaluate_models,
         ]:
             status, message = step()
