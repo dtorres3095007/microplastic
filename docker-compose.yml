@@ -7,5 +7,38 @@ services:
       dockerfile: Dockerfile
     volumes:
       - .:/app
+      - media-data:/app/media
+    ports:
+      - "3000:3000"
     environment:
-      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_USEPOLLING=CHOKIDAR_USEPOLLING
+      - DATABASE_HOST=DATABASE_HOST
+      - DATABASE_PORT=DATABASE_PORT
+      - DATABASE_NAME=DATABASE_NAME
+      - DATABASE_USER=DATABASE_USER
+      - DATABASE_PASSWORD=DATABASE_PASSWORD
+      - MEDIA_STORAGE_PATH=MEDIA_STORAGE_PATH
+      - MEDIA_BASE_URL=http://localhost:3000
+      - API_KEY=API_KEY
+      - API_KEY_NAME=API_KEY_NAME
+      - COPERNICUS_USER=COPERNICUS_USER
+      - COPERNICUS_PASSWORD=COPERNICUS_PASSWORD
+    depends_on:
+      - mysql
+
+  mysql:
+    container_name: mysql-container
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: MYSQL_ROOT_PASSWORD
+      MYSQL_DATABASE: MYSQL_DATABASE
+      MYSQL_USER: MYSQL_USER
+      MYSQL_PASSWORD: MYSQL_PASSWORD
+    volumes:
+      - mysql-data:/var/lib/mysql
+volumes:
+  mysql-data:
+  media-data:
+  
