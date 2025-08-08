@@ -20,14 +20,12 @@ Las credenciales creadas deben ser cargadas en las variables de entorno COPERNIC
 
 ---
 
-### 2️⃣ Clonar el repositorio e importar base de datos
+### 2️⃣ Clonar el repositorio
 
 ```bash
 git clone https://github.com/dtorres3095007/microplastic.git
 cd microplastic
 ```
-
-La base de datos compartida debe ser importada con el administrador de base de datos de preferencia y configurar las credenciales utilizadas en los archivos docker compose y .env.
 
 ### 3️⃣ Levantar los servicios con Docker
 
@@ -42,6 +40,8 @@ Esto iniciará dos servicios:
 ✅ Backend FastAPI en http://localhost:3000
 
 ✅ Base de datos MySQL en el puerto 3306
+
+La base de datos compartida debe ser importada con el administrador de base de datos de preferencia y configurar las credenciales utilizadas en los archivos docker compose y .env.
 
 ### 4️⃣ Acceder a la documentación de la API
 
