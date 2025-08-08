@@ -10,7 +10,6 @@ Antes de comenzar, asegúrate de tener instalado:
 
 - [Docker](https://www.docker.com/)
 - [Docker Compose](https://docs.docker.com/compose/)
-- [Mysql](https://www.mysql.com/)
 
 Por otro lado, debes tener una cuenta en:
 
