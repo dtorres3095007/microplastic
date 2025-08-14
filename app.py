@@ -1,6 +1,4 @@
 from fastapi import FastAPI
-from src.api.trainer import trainer
-from src.api.predictor import predictor
 from src.api.media_collections.router import router as media_collections_router
 from src.api.media_files.router import router as media_files_router
 from src.api.forum.router import router as forum_router
@@ -25,8 +23,6 @@ app.add_middleware(
 )
 
 app.mount("/media", StaticFiles(directory="media"), name="media")
-app.include_router(trainer.router, prefix="/trainer")
-app.include_router(predictor.router, prefix="/predictor")
 app.include_router(
     media_collections_router, prefix="/media_collections", tags=["media_collections"]
 )
