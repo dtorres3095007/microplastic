@@ -133,12 +133,12 @@ class MediaCollections:
         if status != STATUS_OK:
             return status, media
 
-        self._delete_file_by_url(media[0].get("media_url"))
-        self._delete_file_by_url(media[0].get("thumbnail_url"))
-
         deleted = self.media_queries.delete_media(media_id=media_id, conn=self.conn)
         if not deleted:
             return STATUS_BAD_REQUEST, {"message": "Error deleting media"}
+        else:
+            self._delete_file_by_url(media[0].get("media_url"))
+            self._delete_file_by_url(media[0].get("thumbnail_url"))
 
         return STATUS_OK, {"message": "Media deleted successfully"}
 
