@@ -16,3 +16,6 @@ bandit == 1.7.5
 folium == 0.18.0
 mysql-connector-python==9.0.0
 python-multipart
+pytest
+pytest-cov
+coverage
