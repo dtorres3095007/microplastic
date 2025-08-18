@@ -1,3 +1,15 @@
 [tool.autopep8]
 max_line_length = 100
 aggressive = 1
+
+[tool.pytest.ini_options]
+addopts = "--cov=src --cov-branch --cov-report=term-missing --cov-report=html"
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+skip_empty = false
