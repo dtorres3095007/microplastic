@@ -114,3 +114,16 @@ Para correr las predicciones con el modelo entrenado, ejecuta:
 ```bash
 python trainer_predictor.py
 ```
+
+### 1️⃣1️⃣ Ejecución de Tests y Cobertura
+
+En este proyecto se utiliza pytest para las pruebas unitarias, junto con coverage para medir el nivel de cobertura del código.
+Se deben tener instaladas las siguientes librerías:
+```bash
+pytest pytest-cov coverage
+```
+
+Para correr las pruebas unitarias del proyecto, usa:
+```bash
+python -m pytest
+```
