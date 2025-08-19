@@ -5,8 +5,8 @@ from src.entities.machine_learning.predictor import Predictor
 from config import setup_logger
 
 data = {
-    "initial_date": "2025-03-01",
-    "end_date": "2025-03-31",
+    "initial_date": "2025-06-01",
+    "end_date": "2025-06-30",
     "location": {
         "coordinates": [
             [
@@ -52,14 +52,14 @@ def predictor_request():
         )
 
         for step in [
-            predictor.clean_folders,
-            predictor.get_polygon_images,
+            # predictor.clean_folders,
+            # predictor.get_polygon_images,
             predictor.calculate_features,
             predictor.feature_mean,
             predictor.create_polygons,
             predictor.create_dataset,
             predictor.predict,
-            predictor.show_map,
+            # predictor.show_map,
         ]:
             status, message = step()
             if status != STATUS_OK:

@@ -36,7 +36,7 @@ FILE_GEOJSON = "polygon.geojson"
 FILE_GRID = "grid_10m.geojson"
 FILE_DATASET_INDICATORS = "dataset_indicators.csv"
 FILE_DATASET_WITH_PREDICTIONS = "dataset_with_predictions.csv"
-BEST_MODEL = "pred_neural"
+BEST_MODEL = "pred_forest"
 FILE_MAP_PREDICTIONS = "microplastic_predictions_map.html"
 POLYGONS_MODEL_LIST = [
     POLYGON_11_55_72_91,

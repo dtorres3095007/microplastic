@@ -56,7 +56,9 @@ class Models:
         try:
             X = df[self.features]  # Extract features
             y = df[self.target]  # Extract target
-
+            # 🔍 Verifica que está tomando la columna correcta
+            print("Valores de la variable objetivo (y):")
+            print(y.head())  
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, test_size=0.2, random_state=42)  # Split data
 

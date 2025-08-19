@@ -66,11 +66,11 @@ class Predictor:
 
         if status != STATUS_OK:
             logger.error(f"Error in get_images: {message}")
-            return message, status
+            return status, message
         status, message = self.integrations.clean_images()
         logger.info(f"Images cleaned : {message} - {status}")
 
-        return message, status
+        return status, message
 
     def calculate_features(self) -> tuple:
         """
@@ -372,7 +372,7 @@ class Predictor:
                 ).add_to(map_)
 
             # Add the color scale legend to the map
-            colormap.caption = "Microplastic Concentration Prediction"
+            colormap.caption = "Microplastic Concentration (part./m³)"
             colormap.add_to(map_)
 
             # Save the map to an HTML file
