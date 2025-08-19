@@ -15,7 +15,7 @@ def predictor():
 def test_get_polygon_images_ok(predictor):
     with patch.object(predictor.integrations, "get_images", return_value=(STATUS_OK, "ok")) as mock_get, \
          patch.object(predictor.integrations, "clean_images", return_value=(STATUS_OK, "cleaned")) as mock_clean:
-        msg, status = predictor.get_polygon_images()
+        status, msg = predictor.get_polygon_images()
     assert status == STATUS_OK
     assert msg == "cleaned"
     mock_get.assert_called_once()
@@ -93,7 +93,7 @@ def test_clean_folders_error(predictor):
 
 def test_get_polygon_images_error_get(predictor):
     with patch.object(predictor.integrations, "get_images", return_value=(STATUS_BAD_REQUEST, "fail")) as mock_get:
-        msg, status = predictor.get_polygon_images()
+        status, msg = predictor.get_polygon_images()
     assert status == STATUS_BAD_REQUEST
     assert msg == "fail"
     mock_get.assert_called_once()
@@ -101,7 +101,7 @@ def test_get_polygon_images_error_get(predictor):
 def test_get_polygon_images_error_clean(predictor):
     with patch.object(predictor.integrations, "get_images", return_value=(STATUS_OK, "ok")), \
          patch.object(predictor.integrations, "clean_images", return_value=(STATUS_BAD_REQUEST, "fail")) as mock_clean:
-        msg, status = predictor.get_polygon_images()
+        status, msg = predictor.get_polygon_images()
     assert status == STATUS_BAD_REQUEST
     assert msg == "fail"
     mock_clean.assert_called_once()
