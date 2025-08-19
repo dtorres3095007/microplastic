@@ -1,119 +1,129 @@
 import pytest
-from unittest.mock import patch
+import os
+import pandas as pd
+from unittest.mock import patch, MagicMock
 from src.entities.machine_learning.src.integrations import Integrations
 from src.shared.constants import STATUS_OK, STATUS_INTERNAL_SERVER_ERROR
 
 
 @pytest.fixture
-def integrations_instance(tmp_path, monkeypatch):
-    folders = {
-        "MAIN": ["test_main"],
-        "ZIP": "zip_folder",
+def folders(tmp_path):
+    return {
+        "MAIN": [str(tmp_path)],
+        "ZIP": "zip",
         "EXTRACTED": "extracted",
         "CLEANED": "cleaned",
-        "EXTRACTED_AREA": "extracted_area",
-        "POLYGONS": "polygons",
+        "EXTRACTED_AREA": "area",
+        "POLYGONS": "polygons"
     }
-    monkeypatch.chdir(tmp_path)
+
+
+@pytest.fixture
+def integrations(folders):
     return Integrations(folders)
 
 
-@patch("src.entities.machine_learning.src.integrations.Copernicus")
-def test_get_images_search_fail(mock_copernicus, integrations_instance):
-    mock_cop = mock_copernicus.return_value
-    mock_cop.search.return_value = None
-    status, msg = integrations_instance.get_images(
-        "POLYGON((...))", "2023-01-01", "2023-01-31"
-    )
+def test_get_images_ok(integrations, tmp_path):
+    mock_results = {
+        "value": [
+            {"GeoFootprint": {"type": "Polygon", "coordinates": []},
+             "Name": "TILE_L2A.SAFE",
+             "Id": "123"}
+        ]
+    }
+
+    mock_copernicus = MagicMock()
+    mock_copernicus.search.return_value = mock_results
+    mock_copernicus.extract_zip.return_value = (STATUS_OK, "ok")
+
+    with patch.object(integrations, "copernicus", return_value=mock_copernicus), \
+         patch("src.entities.machine_learning.src.integrations.gpd.GeoDataFrame") as mock_gdf:
+        mock_gdf.return_value.set_geometry.return_value = pd.DataFrame([{
+            "Name": "TILE_L2A.SAFE",
+            "Id": "123",
+            "geometry": MagicMock()
+        }])
+
+        status, msg = integrations.get_images("polygon", "2020-01-01", "2020-12-31")
+
+    assert status == STATUS_OK
+    assert "Images downloaded" in msg["message"]
+
+
+def test_get_images_no_results(integrations):
+    mock_copernicus = MagicMock()
+    mock_copernicus.search.return_value = None
+
+    with patch.object(integrations, "copernicus", return_value=mock_copernicus):
+        status, msg = integrations.get_images("polygon", "2020", "2021")
+
     assert status == STATUS_INTERNAL_SERVER_ERROR
+    assert "Error in search" in msg["message"]
 
 
-# ----------------------------
-# Test clean_images
-# ----------------------------
-@patch("os.listdir")
-@patch("os.makedirs")
-@patch("src.entities.machine_learning.src.integrations.Processor")
-def test_clean_images_success(
-    mock_processor_class, mock_makedirs, mock_listdir, integrations_instance, tmp_path
-):
-    mock_listdir.return_value = ["tile1"]
-    mock_processor = mock_processor_class.return_value
-    mock_processor.find_subfolder.return_value = tmp_path / "tile1"
-    mock_processor.read_band.return_value = ([1], {"profile": 1})
-    mock_processor.clean_problematic_areas.return_value = [1]
-    mock_processor.rescale_band.return_value = ([1], {"profile": 1})
-    mock_processor.save_cleaned_band.return_value = None
+def test_clean_images_ok(integrations, tmp_path):
+    subfolder = tmp_path / "extracted" / "sub"
+    os.makedirs(subfolder, exist_ok=True)
 
-    status, msg = integrations_instance.clean_images()
+    processor = MagicMock()
+    processor.find_subfolder.return_value = str(subfolder)
+    processor.read_band.return_value = ("band", {"profile": 1})
+    processor.clean_problematic_areas.return_value = "cleaned_band"
+    processor.rescale_band.return_value = ("rescaled_band", {"profile": 1})
+
+    with patch.object(integrations, "processor", return_value=processor), \
+         patch("src.entities.machine_learning.src.integrations.get_band_name", return_value="B01"), \
+         patch("os.listdir", return_value=["img.jp2"]):
+        status, msg = integrations.clean_images()
+
     assert status == STATUS_OK
+    assert "Images cleaned" in msg["message"]
 
 
-# ----------------------------
-# Test visualize_images
-# ----------------------------
-@patch("os.listdir")
-@patch("os.makedirs")
-@patch("src.entities.machine_learning.src.integrations.Processor")
-def test_visualize_images_success(
-    mock_processor_class, mock_makedirs, mock_listdir, integrations_instance, tmp_path
-):
-    mock_listdir.return_value = ["tile1"]
-    mock_processor = mock_processor_class.return_value
-    mock_processor.visualize_band.return_value = None
-
-    input_dir = tmp_path / "cleaned"
-    input_dir.mkdir()
-    subfolder = input_dir / "tile1"
-    subfolder.mkdir()
-    (subfolder / "B04.tif").write_text("fake data")
-
-    status, msg = integrations_instance.visualize_images(
-        str(input_dir), str(tmp_path / "output")
-    )
-    assert status == STATUS_OK
-
-
-# ----------------------------
-# Test extract_area_at_coordinates
-# ----------------------------
-@patch("os.listdir")
-@patch("os.makedirs")
-@patch("src.entities.machine_learning.src.integrations.Processor")
-def test_extract_area_at_coordinates_success(
-    mock_processor_class, mock_makedirs, mock_listdir, integrations_instance, tmp_path
-):
-    mock_listdir.return_value = ["tile1"]
-    mock_processor = mock_processor_class.return_value
-    mock_processor.extract_area_at_coordinates.return_value = None
-
-    status, msg = integrations_instance.extract_area_at_coordinates(0, 0, 10)
-    assert status == STATUS_OK
-
-
-@patch("src.entities.machine_learning.src.integrations.Processor")
-def test_clean_images_exception(mock_processor_class, integrations_instance):
-    mock_processor = mock_processor_class.return_value
-    mock_processor.find_subfolder.side_effect = Exception("Simulated error")
-    status, msg = integrations_instance.clean_images()
+def test_clean_images_exception(integrations):
+    with patch.object(integrations, "processor", side_effect=Exception("fail")):
+        status, msg = integrations.clean_images()
     assert status == STATUS_INTERNAL_SERVER_ERROR
-    assert "message" in msg
+    assert "An error occurred" in msg["message"]
 
 
-@patch("os.listdir")
-@patch("os.makedirs")
-@patch("src.entities.machine_learning.src.integrations.Processor")
-def test_clean_images_with_invalid_band(
-    mock_processor_class, mock_makedirs, mock_listdir, integrations_instance, tmp_path
-):
-    mock_listdir.return_value = ["tile1"]
-    mock_processor = mock_processor_class.return_value
-    mock_processor.find_subfolder.return_value = tmp_path / "tile1"
-    mock_processor.read_band.return_value = ([1], {"profile": 1})
-    mock_processor.clean_problematic_areas.return_value = [1]
-    mock_processor.rescale_band.return_value = ([1], {"profile": 1})
-    mock_processor.save_cleaned_band.return_value = None
+def test_visualize_images_ok(integrations, tmp_path):
+    subfolder = tmp_path / "cleaned" / "sub"
+    os.makedirs(subfolder, exist_ok=True)
+    tif_file = subfolder / "img.tif"
+    tif_file.write_text("dummy")
 
-    with patch("os.listdir", return_value=["B99.jp2"]):
-        status, msg = integrations_instance.clean_images()
-        assert status == STATUS_OK
+    processor = MagicMock()
+
+    with patch.object(integrations, "processor", return_value=processor):
+        status, msg = integrations.visualize_images(str(tmp_path), str(tmp_path / "out"))
+
+    assert status == STATUS_OK
+    assert "visualized" in msg["message"]
+
+
+def test_visualize_images_exception(integrations):
+    with patch.object(integrations, "processor", side_effect=Exception("boom")):
+        status, msg = integrations.visualize_images("in", "out")
+    assert status == STATUS_INTERNAL_SERVER_ERROR
+    assert "An error occurred" in msg["message"]
+
+
+def test_create_polygons_ok(integrations, tmp_path):
+    processor = MagicMock()
+    processor.generate_grid.return_value = [MagicMock()]
+
+    with patch.object(integrations, "processor", return_value=processor), \
+         patch("src.entities.machine_learning.src.integrations.gpd.GeoDataFrame") as mock_gdf:
+        mock_gdf.return_value.to_file.return_value = None
+        status, msg = integrations.create_polygons_10m([[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]])
+
+    assert status == STATUS_OK
+    assert "Polygons created" in msg["message"]
+
+
+def test_create_polygons_exception(integrations):
+    with patch.object(integrations, "processor", side_effect=Exception("fail")):
+        status, msg = integrations.create_polygons_10m([[0, 0], [1, 0]])
+    assert status == STATUS_INTERNAL_SERVER_ERROR
+    assert "create_polygons_10m" in msg["message"]

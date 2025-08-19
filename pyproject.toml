@@ -4,6 +4,8 @@ aggressive = 1
 
 [tool.pytest.ini_options]
 addopts = "--cov=src --cov-branch --cov-report=term-missing --cov-report=html"
+testpaths = ["unit_test"]
+pythonpath = ["src"]
 
 [tool.coverage.run]
 branch = true
