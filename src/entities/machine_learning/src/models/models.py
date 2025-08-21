@@ -13,8 +13,18 @@ from src.shared.constants import (
     FEATURE_NDVI,
     FEATURE_NDWI,
     FEATURE_NDCI,
-    FEATURE_FDI,
-    FEATURE_NDPI)
+    # FEATURE_FDI,
+    FEATURE_NDPI,
+    # BAND_BLUE,
+    # BAND_GREEN,
+    # BAND_RED,
+    # BAND_REDEDGE1,
+    # BAND_REDEDGE2,
+    # BAND_REDEDGE3,
+    # BAND_NIR_10M,
+    # BAND_NIR_20M,
+    BAND_SWIR1,
+    BAND_SWIR2,)
 
 
 class Models:
@@ -29,8 +39,20 @@ class Models:
             FEATURE_NDVI,
             FEATURE_NDWI,
             FEATURE_NDCI,
-            FEATURE_FDI,
-            FEATURE_NDPI]  # Feature columns
+            # FEATURE_FDI,
+            FEATURE_NDPI,
+            # BAND_BLUE,
+            # BAND_GREEN,
+            # BAND_RED,
+            # BAND_REDEDGE1,
+            # BAND_REDEDGE2,
+            # BAND_REDEDGE3,
+            # BAND_NIR_10M,
+            # BAND_NIR_20M,
+            BAND_SWIR1,
+            BAND_SWIR2,
+            
+            ]  # Feature columns
         self.target = "microplastic_concentration"  # Target column
         self.scaler = StandardScaler()  # Scaler for normalizing features
         self.models = {}  # Dictionary to store trained models
@@ -56,9 +78,6 @@ class Models:
         try:
             X = df[self.features]  # Extract features
             y = df[self.target]  # Extract target
-            # 🔍 Verifica que está tomando la columna correcta
-            print("Valores de la variable objetivo (y):")
-            print(y.head())  
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, test_size=0.2, random_state=42)  # Split data
 
@@ -84,12 +103,21 @@ class Models:
             self.models["Linear Regression"].fit(X_train, y_train)
 
             # Train Random Forest model
-            self.models["Random Forest"] = RandomForestRegressor(n_estimators=100, random_state=42)
+            self.models["Random Forest"] = RandomForestRegressor(
+                n_estimators=300,     # más árboles → más robustez
+                max_depth=15,         # más profundidad para captar diferencias finas
+                min_samples_split=2,  # permite dividir nodos pequeños
+                min_samples_leaf=1,   # hojas con pocas muestras → más sensibilidad
+                random_state=42,
+                n_jobs=-1
+            )
             self.models["Random Forest"].fit(X_train, y_train)
 
             # Train Neural Network model
             self.models["Neural Network"] = MLPRegressor(
-                hidden_layer_sizes=(64, 32), max_iter=1000, random_state=42)
+                hidden_layer_sizes=(128, 64, 32),  # más capacidad, 3 capas                    # más iteraciones permitidas
+                random_state=42,
+            )
             self.models["Neural Network"].fit(X_train, y_train)
 
             return STATUS_OK, {"message": "Models trained."}

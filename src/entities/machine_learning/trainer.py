@@ -21,6 +21,7 @@ from src.shared.constants import (
     POLYGONS_MODEL_LIST,
     STATUS_BAD_REQUEST,
     STATUS_OK,
+    BANDS_LIST
 )
 from src.entities.machine_learning.src.integrations import Integrations
 import os
@@ -172,6 +173,9 @@ class Trainer:
                 features_path = os.path.join(
                     polygon_path, FOLDERS_MODEL_NAMES["FEATURES"]
                 )
+                bands_path = os.path.join(
+                    polygon_path, FOLDERS_MODEL_NAMES["CLEANED"]
+                )
                 logger.info(f"Processing polygon: {folder} - {date}")
 
                 indicators = {
@@ -241,6 +245,58 @@ class Trainer:
                         )
                     else:
                         data[indicator_name] = None
+
+                # Add bands to the dataset
+                if not os.path.isdir(bands_path):
+                    logger.error(
+                        f"Processing polygon: {folder} - {date} - Error: bands_path does not exist {bands_path}"
+                    )
+                    continue
+
+                for band_folder in os.listdir(bands_path):
+                    date_str = band_folder.split("_")[2][:8]
+                    band_date = datetime.strptime(date_str, "%Y%m%d")
+                    lower_bound = dataset_date - timedelta(days=3)
+                    upper_bound = dataset_date + timedelta(days=3)
+
+                    if lower_bound <= band_date <= upper_bound:
+                        logger.info(
+                            f"Band {band_folder} is within range for {folder} - {date}"
+                        )
+                        band_path = os.path.join(bands_path, band_folder)
+                        for band_name in BANDS_LIST:
+                            band_file = os.path.join(band_path, f"{band_name}.tif")
+                            if not os.path.isfile(band_file):
+                                data[band_name] = None
+                                logger.error(
+                                    f"Band file {band_file} does not exist"
+                                )
+                                continue
+
+                            with rasterio.open(band_file) as datasetBand:
+                                image_crs = datasetBand.crs
+                                lon_utm, lat_utm = transform(
+                                    CRS.from_epsg(4326),
+                                    image_crs,
+                                    [longitude],
+                                    [latitude],
+                                )
+                                row, col = map(
+                                    int,
+                                    rowcol(
+                                        datasetBand.transform,
+                                        lon_utm[0],
+                                        lat_utm[0],
+                                    ),
+                                )
+                                raw_value = datasetBand.read(1)[row, col]
+                                value = raw_value / 10000.0
+                                data[band_name] = value
+                                logger.info(
+                                    f"Extracted {band_name}: {value} for {folder} and {date} and {band_folder}"
+                                )
+
+
             dataset_path = os.path.join(
                 *FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["DATASET"]
             )

@@ -1,17 +1,40 @@
 R10_BANDS = {"B02", "B03", "B04", "B08"}
 R20_BANDS = {"B05", "B06", "B07", "B8A", "B11", "B12"}
+BAND_BLUE = "BLUE"
+BAND_GREEN = "GREEN"
+BAND_RED = "RED"
+BAND_REDEDGE1 = "REDEDGE1"
+BAND_REDEDGE2 = "REDEDGE2"
+BAND_REDEDGE3 = "REDEDGE3"
+BAND_NIR_10M = "NIR_10m"
+BAND_NIR_20M = "NIR_20m"
+BAND_SWIR1 = "SWIR1"
+BAND_SWIR2 = "SWIR2"
+
 BANDS_MAP = {
-    "B02": "BLUE",
-    "B03": "GREEN",
-    "B04": "RED",
-    "B05": "REDEDGE1",
-    "B06": "REDEDGE2",
-    "B07": "REDEDGE3",
-    "B08": "NIR_10m",
-    "B8A": "NIR_20m",
-    "B11": "SWIR1",
-    "B12": "SWIR2",
+    "B02": BAND_BLUE,
+    "B03": BAND_GREEN,
+    "B04": BAND_RED,
+    "B05": BAND_REDEDGE1,
+    "B06": BAND_REDEDGE2,
+    "B07": BAND_REDEDGE3,
+    "B08": BAND_NIR_10M,
+    "B8A": BAND_NIR_20M,
+    "B11": BAND_SWIR1,
+    "B12": BAND_SWIR2,
 }
+BANDS_LIST = [
+    BAND_BLUE,
+    BAND_GREEN,
+    BAND_RED,
+    BAND_REDEDGE1,
+    BAND_REDEDGE2,
+    BAND_REDEDGE3,
+    BAND_NIR_10M,
+    BAND_NIR_20M,
+    BAND_SWIR1,
+    BAND_SWIR2,
+]
 R10_FOLDER = "R10m"
 R20_FOLDER = "R20m"
 STATUS_OK = 200
@@ -60,6 +83,7 @@ FOLDERS_DOWNLOAD_NAMES = {
     "EXTRACTED_AREA": "extracted_area",
     "FEATURES": "features",
     "FEATURES_MEAN": "features_mean",
+    "BANDS_MEAN": "bands_mean",
     "POLYGONS": "polygons",
     "DATASET": "dataset",
 }

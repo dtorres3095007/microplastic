@@ -8,6 +8,7 @@ from src.shared.constants import (
     FILE_MAP_PREDICTIONS,
     FOLDERS_DATASET_NAMES,
     BEST_MODEL,
+    BANDS_LIST,
     STATUS_OK)
 import logging
 from src.entities.machine_learning.src.integrations import Integrations
@@ -184,6 +185,59 @@ class Predictor:
             logger.error(f"Error in feature_average: {str(e)}")
             return STATUS_BAD_REQUEST, {"message": str(e)}
 
+    def bands_means(self):
+        try:
+            for band in BANDS_LIST:
+                sum_bands = 0
+                count = 0
+                base_dir = os.path.join(
+                    os.getcwd(),
+                    *FOLDERS_DOWNLOAD_NAMES["MAIN"],
+                    FOLDERS_DOWNLOAD_NAMES["CLEANED"])
+                output_dir = os.path.join(
+                    os.getcwd(),
+                    *FOLDERS_DOWNLOAD_NAMES["MAIN"],
+                    FOLDERS_DOWNLOAD_NAMES["BANDS_MEAN"])
+                os.makedirs(output_dir, exist_ok=True)
+
+                for folder in os.listdir(base_dir):
+                    folder_path = os.path.join(base_dir, folder)
+                    band_file = os.path.join(folder_path, f"{band}.tif")
+
+                    if os.path.exists(band_file):
+                        with rasterio.open(band_file) as src:
+                            image = src.read(1).astype(np.uint16)
+                            image[image == src.nodata] = 0
+
+                            if sum_bands is None:
+                                sum_bands = np.zeros_like(image, dtype=np.uint32)
+
+                            sum_bands += image
+                            count += 1
+
+                if count > 0:
+                    mean_band = (sum_bands / count).astype(np.uint16)
+                    output_path = os.path.join(output_dir, f"{band}.tif")
+
+                    with rasterio.open(band_file) as src:
+                        profile = src.profile.copy()
+
+                    profile.update(
+                        dtype=rasterio.uint16,
+                        count=1,
+                        nodata=0,
+                        driver="GTiff"
+                    )
+                    with rasterio.open(output_path, "w", **profile) as dst:
+                        dst.write(mean_band, 1)
+                        dst.crs = profile["crs"]
+
+                    logger.info(f"Band {band} average calculated")
+            return STATUS_OK, {"message": "Features average calculated."}
+        except Exception as e:
+            logger.error(f"Error in bands_means: {str(e)}")
+            return STATUS_BAD_REQUEST, {"message": str(e)}
+
     def create_polygons(self):
         """
         Create the polygons for the model.
@@ -228,7 +282,7 @@ class Predictor:
             data = {"polygon_id": [], "geometry": []}  # Store ID and geometry (WKT format)
 
             # Initialize feature columns in the dataset
-            for ind in FEATURES_LIST:
+            for ind in FEATURES_LIST + BANDS_LIST:
                 data[ind] = []
 
             # Iterate over each 10m x 10m polygon and extract feature values
@@ -236,6 +290,44 @@ class Predictor:
                 polygon_id = idx + 1
                 data["polygon_id"].append(polygon_id)
                 data["geometry"].append(polygon.wkt)  # Store as WKT format for reference
+
+                # Extract band values
+                for band in BANDS_LIST:
+                    band_folder = os.path.join(
+                        os.getcwd(),
+                        *FOLDERS_DOWNLOAD_NAMES["MAIN"],
+                        FOLDERS_DOWNLOAD_NAMES["BANDS_MEAN"])
+                    band_file = os.path.join(band_folder, f"{band}.tif")
+                    if os.path.exists(band_file):
+                        with rasterio.open(band_file) as src:
+                            try:
+                                print("crs band", src.crs)
+                                # Clip the raster to the cell's polygon area
+                                polygon_transformed = transform_geom(
+                                    "EPSG:4326",  # Input CRS (lat/lon)
+                                    src.crs,  # Target CRS (from raster)
+                                    polygon.__geo_interface__,  # Convert Shapely to GeoJSON format
+                                    precision=6  # Adjust precision for better accuracy
+                                )
+
+                                out_image, _ = mask(src, [polygon_transformed], crop=True)
+                                # Remove NoData values and compute the mean
+                                valid_pixels = out_image[out_image != src.nodata]
+                                # Convert values using the scaling formula if there are valid pixels
+                                if valid_pixels.size > 0:
+                                    mean_value = np.nanmean(valid_pixels)
+                                    scaled_value = mean_value / 10000.0
+                                else:
+                                    scaled_value = np.nan
+
+                            except Exception as e:
+                                logger.error(f"Error processing {band}: {e}")
+                                scaled_value = np.nan
+                    else:
+                        logger.info(f"⚠️ {band}.tif not found!")
+                        scaled_value = np.nan
+                    
+                    data[band].append(scaled_value)
 
                 # Extract values from each feature (TIFF file)
                 for ind in FEATURES_LIST:
@@ -278,6 +370,7 @@ class Predictor:
                     # Store the computed mean value for the feature
                     data[ind].append(scaled_value)
 
+
             # Convert the extracted data to a Pandas DataFrame
             df = pd.DataFrame(data)
             output_csv = os.path.join(
@@ -316,7 +409,7 @@ class Predictor:
 
         models = model.models
         scaler = model.scaler
-        X = df[FEATURES_LIST]
+        X = df[model.features]
         linear_model = models["Linear Regression"]
         random_forest = models["Random Forest"]
         neural_network = models["Neural Network"]
