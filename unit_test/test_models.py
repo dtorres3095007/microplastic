@@ -11,6 +11,8 @@ from src.shared.constants import (
     FEATURE_NDCI,
     FEATURE_FDI,
     FEATURE_NDPI,
+    BAND_SWIR1,
+    BAND_SWIR2
 )
 
 
@@ -22,6 +24,8 @@ def sample_dataframe():
         FEATURE_NDCI: np.random.rand(100),
         FEATURE_FDI: np.random.rand(100),
         FEATURE_NDPI: np.random.rand(100),
+        BAND_SWIR1: np.random.rand(100),
+        BAND_SWIR2: np.random.rand(100),
         "microplastic_concentration": np.random.rand(100),
     }
     return pd.DataFrame(data)
@@ -51,6 +55,7 @@ def test_load_data_failure(mock_read_csv, models_instance):
 # --- split_data ---
 def test_split_data_success(models_instance, sample_dataframe):
     status, data = models_instance.split_data(sample_dataframe)
+    print("errorr ------", data)
     assert status == STATUS_OK
     X_train, X_test, y_train, y_test = data
     assert len(X_train) > 0 and len(X_test) > 0
