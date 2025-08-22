@@ -8,7 +8,22 @@ from src.shared.constants import (
     FILE_MAP_PREDICTIONS,
     FOLDERS_DATASET_NAMES,
     BEST_MODEL,
+    FEATURE_FDI,
+    FEATURE_NDCI,
+    FEATURE_NDPI,
+    FEATURE_NDVI,
+    FEATURE_NDWI,
     BANDS_LIST,
+    BAND_BLUE,
+    BAND_GREEN,
+    BAND_RED,
+    BAND_REDEDGE1,
+    BAND_REDEDGE2,
+    BAND_REDEDGE3,
+    BAND_NIR_10M,
+    BAND_NIR_20M,
+    BAND_SWIR1,
+    BAND_SWIR2,
     STATUS_OK)
 import logging
 from src.entities.machine_learning.src.integrations import Integrations
@@ -280,7 +295,13 @@ class Predictor:
 
             # Dictionary to store extracted data
             data = {"polygon_id": [], "geometry": []}  # Store ID and geometry (WKT format)
-
+            base_dir = os.path.join(os.getcwd(), *FOLDERS_DOWNLOAD_NAMES["MAIN"])
+            features_path = os.path.join(
+                    base_dir, FOLDERS_DOWNLOAD_NAMES["FEATURES"]
+                )
+            bands_path = os.path.join(
+                    base_dir, FOLDERS_DOWNLOAD_NAMES["CLEANED"]
+                )
             # Initialize feature columns in the dataset
             for ind in FEATURES_LIST + BANDS_LIST:
                 data[ind] = []
@@ -290,87 +311,130 @@ class Predictor:
                 polygon_id = idx + 1
                 data["polygon_id"].append(polygon_id)
                 data["geometry"].append(polygon.wkt)  # Store as WKT format for reference
-
-                # Extract band values
-                for band in BANDS_LIST:
-                    band_folder = os.path.join(
-                        os.getcwd(),
-                        *FOLDERS_DOWNLOAD_NAMES["MAIN"],
-                        FOLDERS_DOWNLOAD_NAMES["BANDS_MEAN"])
-                    band_file = os.path.join(band_folder, f"{band}.tif")
-                    if os.path.exists(band_file):
-                        with rasterio.open(band_file) as src:
-                            try:
-                                print("crs band", src.crs)
-                                # Clip the raster to the cell's polygon area
-                                polygon_transformed = transform_geom(
-                                    "EPSG:4326",  # Input CRS (lat/lon)
-                                    src.crs,  # Target CRS (from raster)
-                                    polygon.__geo_interface__,  # Convert Shapely to GeoJSON format
-                                    precision=6  # Adjust precision for better accuracy
-                                )
-
-                                out_image, _ = mask(src, [polygon_transformed], crop=True)
-                                # Remove NoData values and compute the mean
-                                valid_pixels = out_image[out_image != src.nodata]
-                                # Convert values using the scaling formula if there are valid pixels
-                                if valid_pixels.size > 0:
-                                    mean_value = np.nanmean(valid_pixels)
-                                    scaled_value = mean_value / 10000.0
-                                else:
-                                    scaled_value = np.nan
-
-                            except Exception as e:
-                                logger.error(f"Error processing {band}: {e}")
-                                scaled_value = np.nan
-                    else:
-                        logger.info(f"⚠️ {band}.tif not found!")
-                        scaled_value = np.nan
-                    
-                    data[band].append(scaled_value)
+                
+                indicators = {
+                    FEATURE_NDVI: [],
+                    FEATURE_NDWI: [],
+                    FEATURE_NDCI: [],
+                    FEATURE_FDI: [],
+                    FEATURE_NDPI: [],
+                }
+                if not os.path.isdir(features_path):
+                    logger.error(
+                        "Error: features_path does not exist"
+                    )
+                    continue
 
                 # Extract values from each feature (TIFF file)
-                for ind in FEATURES_LIST:
-                    raster_path = os.path.join(
-                        os.getcwd(),
-                        *FOLDERS_DOWNLOAD_NAMES["MAIN"],
-                        FOLDERS_DOWNLOAD_NAMES["FEATURES_MEAN"], f"{ind}.tif")
-                    if os.path.exists(raster_path):
-                        with rasterio.open(raster_path) as src:
-                            try:
-                                print("crs", src.crs)
-                                # Clip the raster to the cell's polygon area
-                                # Transform polygon to match the raster's CRS
-                                polygon_transformed = transform_geom(
-                                    "EPSG:4326",  # Input CRS (lat/lon)
-                                    src.crs,  # Target CRS (from raster)
-                                    polygon.__geo_interface__,  # Convert Shapely to GeoJSON format
-                                    precision=6  # Adjust precision for better accuracy
-                                )
+                for band_indicator_folder in os.listdir(features_path):
+                    band_path = os.path.join(features_path, band_indicator_folder)
 
-                                # Use the transformed polygon in mask()
-                                out_image, _ = mask(src, [polygon_transformed], crop=True)
-                                # Remove NoData values and compute the mean
-                                valid_pixels = out_image[out_image != src.nodata]
-                                # Convert values using the scaling formula if there are valid pixels
-                                if valid_pixels.size > 0:
-                                    mean_value = np.nanmean(valid_pixels)
-                                    scaled_value = (
-                                        mean_value / 32767.5) - 1  # Apply scaling formula
-                                else:
+                    for ind in FEATURES_LIST:
+                        raster_path = os.path.join(
+                            band_path, f"{ind}.tif"
+                        )
+                        if os.path.exists(raster_path):
+                            with rasterio.open(raster_path) as src:
+                                try:
+                                    print("crs", src.crs)
+                                    # Clip the raster to the cell's polygon area
+                                    # Transform polygon to match the raster's CRS
+                                    polygon_transformed = transform_geom(
+                                        "EPSG:4326",  # Input CRS (lat/lon)
+                                        src.crs,  # Target CRS (from raster)
+                                        polygon.__geo_interface__,  # Convert Shapely to GeoJSON format
+                                        precision=6  # Adjust precision for better accuracy
+                                    )
+
+                                    # Use the transformed polygon in mask()
+                                    out_image, _ = mask(src, [polygon_transformed], crop=True)
+                                    # Remove NoData values and compute the mean
+                                    valid_pixels = out_image[out_image != src.nodata]
+                                    # Convert values using the scaling formula if there are valid pixels
+                                    if valid_pixels.size > 0:
+                                        mean_value = np.nanmean(valid_pixels)
+                                        scaled_value = (
+                                            mean_value / 32767.5) - 1  # Apply scaling formula
+                                    else:
+                                        scaled_value = np.nan
+
+                                except Exception as e:
+                                    logger.error(f"Error processing {ind} for cell {polygon_id}: {e}")
                                     scaled_value = np.nan
+                        else:
+                            logger.info(f"⚠️ {ind}_mean.tif not found!")
+                            scaled_value = np.nan
 
-                            except Exception as e:
-                                logger.error(f"Error processing {ind} for cell {polygon_id}: {e}")
-                                scaled_value = np.nan
+                        # Store the computed mean value for the feature
+                        indicators[ind].append(scaled_value)
+
+                for indicator_name in FEATURES_LIST:
+                    if indicators[indicator_name]:
+                        avg_val = sum(indicators[indicator_name]) / len(indicators[indicator_name])
                     else:
-                        logger.info(f"⚠️ {ind}_mean.tif not found!")
-                        scaled_value = np.nan
+                        avg_val = None
+                    data[indicator_name].append(avg_val)  # <-- APPEND
 
-                    # Store the computed mean value for the feature
-                    data[ind].append(scaled_value)
+                bands = {
+                    BAND_BLUE : [],
+                    BAND_GREEN : [],
+                    BAND_RED : [],
+                    BAND_REDEDGE1 : [],
+                    BAND_REDEDGE2 : [],
+                    BAND_REDEDGE3 : [],
+                    BAND_NIR_10M : [],
+                    BAND_NIR_20M : [],
+                    BAND_SWIR1 : [],
+                    BAND_SWIR2 : [],
+                }
 
+                # Add bands to the dataset
+                if not os.path.isdir(bands_path):
+                    logger.error(
+                        "Error: bands_path does not exist {bands_path}"
+                    )
+                    continue
+                for band_folder in os.listdir(bands_path):
+                    band_path = os.path.join(bands_path, band_folder)
+                    for band in BANDS_LIST:
+                        band_file = os.path.join(band_path, f"{band}.tif")
+                        if os.path.exists(band_file):
+                            with rasterio.open(band_file) as src:
+                                try:
+                                    print("crs band", src.crs)
+                                    # Clip the raster to the cell's polygon area
+                                    polygon_transformed = transform_geom(
+                                        "EPSG:4326",  # Input CRS (lat/lon)
+                                        src.crs,  # Target CRS (from raster)
+                                        polygon.__geo_interface__,  # Convert Shapely to GeoJSON format
+                                        precision=6  # Adjust precision for better accuracy
+                                    )
 
+                                    out_image, _ = mask(src, [polygon_transformed], crop=True)
+                                    # Remove NoData values and compute the mean
+                                    valid_pixels = out_image[out_image != src.nodata]
+                                    # Convert values using the scaling formula if there are valid pixels
+                                    if valid_pixels.size > 0:
+                                        mean_value = np.nanmean(valid_pixels)
+                                        scaled_value = mean_value / 10000.0
+                                    else:
+                                        scaled_value = np.nan
+
+                                except Exception as e:
+                                    logger.error(f"Error processing {band}: {e}")
+                                    scaled_value = np.nan
+                        else:
+                            logger.info(f"⚠️ {band}.tif not found!")
+                            scaled_value = np.nan
+                        
+                        bands[band].append(scaled_value)
+
+                for band_name in BANDS_LIST:
+                    if bands[band_name]:
+                        avg_val = sum(bands[band_name]) / len(bands[band_name])
+                    else:
+                        avg_val = None
+                    data[band_name].append(avg_val)  # <-- APPEND
             # Convert the extracted data to a Pandas DataFrame
             df = pd.DataFrame(data)
             output_csv = os.path.join(
@@ -433,7 +497,7 @@ class Predictor:
                 *FOLDERS_DOWNLOAD_NAMES["MAIN"], FOLDERS_DOWNLOAD_NAMES["DATASET"], FILE_DATASET_WITH_PREDICTIONS
             )
             df = pd.read_csv(csv_file)
-
+            PRED_MIN, PRED_MAX = 0.0, 2.0
             # Convert the 'geometry' column from WKT to shapely polygons
             df["geometry"] = df["geometry"].apply(loads)
 
@@ -443,12 +507,12 @@ class Predictor:
             # Center the map based on the dataset's centroid
             center = gdf.geometry.centroid.unary_union.centroid
             map_ = folium.Map(location=[center.y, center.x], zoom_start=12, tiles="cartodbpositron")
-
+            gdf[BEST_MODEL] = gdf[BEST_MODEL].clip(lower=PRED_MIN, upper=PRED_MAX)
             # Create a color map based on the forest model predictions
             colormap = folium.LinearColormap(
                 ["blue", "green", "yellow", "red"],
-                vmin=gdf[BEST_MODEL].min(),
-                vmax=gdf[BEST_MODEL].max()
+                vmin=PRED_MIN,
+                vmax=PRED_MAX
             )
 
             # Add polygons to the map with colors representing microplastic predictions

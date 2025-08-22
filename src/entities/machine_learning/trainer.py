@@ -21,7 +21,17 @@ from src.shared.constants import (
     POLYGONS_MODEL_LIST,
     STATUS_BAD_REQUEST,
     STATUS_OK,
-    BANDS_LIST
+    BANDS_LIST,
+    BAND_BLUE,
+    BAND_GREEN,
+    BAND_RED,
+    BAND_REDEDGE1,
+    BAND_REDEDGE2,
+    BAND_REDEDGE3,
+    BAND_NIR_10M,
+    BAND_NIR_20M,
+    BAND_SWIR1,
+    BAND_SWIR2,
 )
 from src.entities.machine_learning.src.integrations import Integrations
 import os
@@ -253,6 +263,19 @@ class Trainer:
                     )
                     continue
 
+                bands = {
+                    BAND_BLUE : [],
+                    BAND_GREEN : [],
+                    BAND_RED : [],
+                    BAND_REDEDGE1 : [],
+                    BAND_REDEDGE2 : [],
+                    BAND_REDEDGE3 : [],
+                    BAND_NIR_10M : [],
+                    BAND_NIR_20M : [],
+                    BAND_SWIR1 : [],
+                    BAND_SWIR2 : [],
+                }
+
                 for band_folder in os.listdir(bands_path):
                     date_str = band_folder.split("_")[2][:8]
                     band_date = datetime.strptime(date_str, "%Y%m%d")
@@ -291,11 +314,18 @@ class Trainer:
                                 )
                                 raw_value = datasetBand.read(1)[row, col]
                                 value = raw_value / 10000.0
-                                data[band_name] = value
+                                bands[band_name].append(value)
                                 logger.info(
                                     f"Extracted {band_name}: {value} for {folder} and {date} and {band_folder}"
                                 )
 
+                for band_name in BANDS_LIST:
+                    if bands[band_name]:
+                        data[band_name] = sum(bands[band_name]) / len(
+                            bands[band_name]
+                        )
+                    else:
+                        data[band_name] = None
 
             dataset_path = os.path.join(
                 *FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["DATASET"]
