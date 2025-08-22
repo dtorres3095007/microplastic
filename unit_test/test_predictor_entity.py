@@ -42,6 +42,187 @@ def test_predict_ok(predictor):
             m.predict.return_value = [0.5]
         status, msg = predictor.predict()
     assert status == STATUS_OK
+    
+def test_calculate_features_ok(predictor):
+    with patch("os.path.join", side_effect=lambda *args: "/".join(args)), \
+         patch("os.listdir") as mock_listdir, \
+         patch("os.makedirs"), \
+         patch("src.entities.machine_learning.predictor.Feature") as mock_feature, \
+         patch("os.path.splitext", side_effect=lambda f: (f.replace(".tif", ""), ".tif")):
+        mock_listdir.side_effect = [
+            ["img_folder"],         # os.listdir(base_dir)
+            ["B01.tif", "B02.tif"] # os.listdir(image_path)
+        ]
+        feature_instance = mock_feature.return_value
+        feature_instance.open_bands.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndvi.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndwi.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndci.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_fdi.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndpi.return_value = (STATUS_OK, "ok")
+        status, msg = predictor.calculate_features()
+    assert status == STATUS_OK
+    assert "Features calculated" in msg["message"]
+
+def test_calculate_features_fail_open_bands(predictor):
+    with patch("os.path.join", side_effect=lambda *args: "/".join(args)), \
+         patch("os.listdir") as mock_listdir, \
+         patch("os.makedirs"), \
+         patch("src.entities.machine_learning.predictor.Feature") as mock_feature, \
+         patch("os.path.splitext", side_effect=lambda f: (f.replace(".tif", ""), ".tif")), \
+         patch("src.entities.machine_learning.predictor.logger") as mock_logger:
+        mock_listdir.side_effect = [
+            ["img_folder"],
+            ["B01.tif", "B02.tif"]
+        ]
+        feature_instance = mock_feature.return_value
+        feature_instance.open_bands.return_value = (STATUS_BAD_REQUEST, "fail open_bands")
+        predictor.calculate_features()
+    mock_logger.error.assert_any_call("Error in open_bands: fail open_bands")
+
+
+def test_calculate_features_fail_ndvi(predictor):
+    with patch("os.path.join", side_effect=lambda *args: "/".join(args)), \
+         patch("os.listdir") as mock_listdir, \
+         patch("os.makedirs"), \
+         patch("src.entities.machine_learning.predictor.Feature") as mock_feature, \
+         patch("os.path.splitext", side_effect=lambda f: (f.replace(".tif", ""), ".tif")), \
+         patch("src.entities.machine_learning.predictor.logger") as mock_logger:
+        mock_listdir.side_effect = [
+            ["img_folder"],
+            ["B01.tif", "B02.tif"]
+        ]
+        feature_instance = mock_feature.return_value
+        feature_instance.open_bands.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndvi.return_value = (STATUS_BAD_REQUEST, "fail ndvi")
+        predictor.calculate_features()
+    mock_logger.error.assert_any_call("Error in calculate_ndvi: fail ndvi")
+
+def test_calculate_features_fail_ndwi(predictor):
+    with patch("os.path.join", side_effect=lambda *args: "/".join(args)), \
+         patch("os.listdir") as mock_listdir, \
+         patch("os.makedirs"), \
+         patch("src.entities.machine_learning.predictor.Feature") as mock_feature, \
+         patch("os.path.splitext", side_effect=lambda f: (f.replace(".tif", ""), ".tif")), \
+         patch("src.entities.machine_learning.predictor.logger") as mock_logger:
+        mock_listdir.side_effect = [
+            ["img_folder"],
+            ["B01.tif", "B02.tif"]
+        ]
+        feature_instance = mock_feature.return_value
+        feature_instance.open_bands.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndvi.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndwi.return_value = (STATUS_BAD_REQUEST, "fail ndwi")
+        predictor.calculate_features()
+    mock_logger.error.assert_any_call("Error in calculate_ndwi: fail ndwi")
+
+def test_calculate_features_fail_ndci(predictor):
+    with patch("os.path.join", side_effect=lambda *args: "/".join(args)), \
+         patch("os.listdir") as mock_listdir, \
+         patch("os.makedirs"), \
+         patch("src.entities.machine_learning.predictor.Feature") as mock_feature, \
+         patch("os.path.splitext", side_effect=lambda f: (f.replace(".tif", ""), ".tif")), \
+         patch("src.entities.machine_learning.predictor.logger") as mock_logger:
+        mock_listdir.side_effect = [
+            ["img_folder"],
+            ["B01.tif", "B02.tif"]
+        ]
+        feature_instance = mock_feature.return_value
+        feature_instance.open_bands.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndvi.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndwi.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndci.return_value = (STATUS_BAD_REQUEST, "fail ndci")
+        predictor.calculate_features()
+    mock_logger.error.assert_any_call("Error in calculate_ndci: fail ndci")
+
+def test_calculate_features_fail_fdi(predictor):
+    with patch("os.path.join", side_effect=lambda *args: "/".join(args)), \
+         patch("os.listdir") as mock_listdir, \
+         patch("os.makedirs"), \
+         patch("src.entities.machine_learning.predictor.Feature") as mock_feature, \
+         patch("os.path.splitext", side_effect=lambda f: (f.replace(".tif", ""), ".tif")), \
+         patch("src.entities.machine_learning.predictor.logger") as mock_logger:
+        mock_listdir.side_effect = [
+            ["img_folder"],
+            ["B01.tif", "B02.tif"]
+        ]
+        feature_instance = mock_feature.return_value
+        feature_instance.open_bands.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndvi.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndwi.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndci.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_fdi.return_value = (STATUS_BAD_REQUEST, "fail fdi")
+        predictor.calculate_features()
+    mock_logger.error.assert_any_call("Error in calculate_fdi: fail fdi")
+
+def test_calculate_features_fail_ndpi(predictor):
+    with patch("os.path.join", side_effect=lambda *args: "/".join(args)), \
+         patch("os.listdir") as mock_listdir, \
+         patch("os.makedirs"), \
+         patch("src.entities.machine_learning.predictor.Feature") as mock_feature, \
+         patch("os.path.splitext", side_effect=lambda f: (f.replace(".tif", ""), ".tif")), \
+         patch("src.entities.machine_learning.predictor.logger") as mock_logger:
+        mock_listdir.side_effect = [
+            ["img_folder"],
+            ["B01.tif", "B02.tif"]
+        ]
+        feature_instance = mock_feature.return_value
+        feature_instance.open_bands.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndvi.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndwi.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndci.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_fdi.return_value = (STATUS_OK, "ok")
+        feature_instance.calculate_ndpi.return_value = (STATUS_BAD_REQUEST, "fail ndpi")
+        predictor.calculate_features()
+    mock_logger.error.assert_any_call("Error in calculate_ndpi: fail ndpi")
+
+def test_feature_mean_ok(predictor):
+    with patch("os.path.join", side_effect=lambda *args: "/".join(args)), \
+         patch("os.makedirs"), \
+         patch("os.listdir", return_value=["img_folder"]), \
+         patch("os.path.exists", return_value=True), \
+         patch("rasterio.open") as mock_rasterio, \
+         patch("src.entities.machine_learning.predictor.logger") as mock_logger:
+        # Simula un raster válido
+        mock_src = MagicMock()
+        mock_src.read.return_value = MagicMock()
+        mock_src.read.return_value.astype.return_value = MagicMock()
+        mock_src.nodata = 0
+        mock_src.profile.copy.return_value = {"crs": "EPSG:4326", "dtype": "uint16"}
+        mock_rasterio.return_value.__enter__.return_value = mock_src
+
+        status, msg = predictor.feature_mean()
+    assert status == STATUS_OK
+    assert "Features mean saved" in msg["message"]
+    mock_logger.info.assert_any_call("✅ Feature NDVI average calculated")
+
+def test_bands_means_error(predictor):
+    with patch("os.path.join", side_effect=lambda *args: "/".join(args)), \
+         patch("os.listdir") as mock_listdir, \
+         patch("os.makedirs"), \
+         patch("os.path.exists", return_value=True), \
+         patch("rasterio.open") as mock_rasterio, \
+         patch("src.entities.machine_learning.predictor.logger") as mock_logger:
+        # Simula estructura de carpetas y archivos
+        mock_listdir.side_effect = [
+            ["img_folder"],         # os.listdir(base_dir)
+            ["B01.tif", "B02.tif"] # os.listdir(folder_path)
+        ]
+        # Simula raster válido
+        mock_src = MagicMock()
+        mock_src.read.return_value = [[1, 2], [3, 4]]
+        mock_src.nodata = 0
+        mock_src.profile.copy.return_value = {"crs": "EPSG:4326", "dtype": "uint16"}
+        mock_rasterio.return_value.__enter__.return_value = mock_src
+
+        status, msg = predictor.bands_means()
+    assert status == STATUS_BAD_REQUEST
+
+def test_bands_means_error(predictor):
+    with patch("os.listdir", side_effect=Exception("fail")):
+        status, msg = predictor.bands_means()
+    assert status == STATUS_BAD_REQUEST
+    assert "fail" in msg["message"]
 
 def test_clean_folders_ok(predictor):
     with patch("os.path.exists", return_value=True), \
