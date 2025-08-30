@@ -1,4 +1,3 @@
-
 from shapely.geometry import shape
 from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
 from src.entities.machine_learning.predictor import Predictor
@@ -10,30 +9,15 @@ data = {
     "location": {
         "coordinates": [
             [
-                [
-                    -72.94475726112186,
-                    11.537126610927615
-                ],
-                [
-                    -72.90527514442265,
-                    11.55764540798314
-                ],
-                [
-                    -72.91231326087772,
-                    11.570595022989117
-                ],
-                [
-                    -72.95042208656132,
-                    11.549908988703729
-                ],
-                [
-                    -72.94475726112186,
-                    11.537126610927615
-                ]
+                [-72.94475726112186, 11.537126610927615],
+                [-72.90527514442265, 11.55764540798314],
+                [-72.91231326087772, 11.570595022989117],
+                [-72.95042208656132, 11.549908988703729],
+                [-72.94475726112186, 11.537126610927615],
             ]
         ],
-        "type": "Polygon"
-    }
+        "type": "Polygon",
+    },
 }
 
 
@@ -42,13 +26,15 @@ def predictor_request():
 
     try:
         polygon_wkt = shape(data["location"]).wkt
-        logger.info(f"initial_date : {data['initial_date']} - end_date : {data['end_date']}")
+        logger.info(
+            f"initial_date : {data['initial_date']} - end_date : {data['end_date']}"
+        )
 
         predictor = Predictor(
             polygon_wkt,
             data["location"]["coordinates"],
             data["initial_date"],
-            data["end_date"]
+            data["end_date"],
         )
 
         for step in [
@@ -61,11 +47,12 @@ def predictor_request():
             predictor.create_dataset,
             predictor.predict,
             predictor.show_map,
+            predictor.outputs_db,
         ]:
             status, message = step()
             if status != STATUS_OK:
                 logger.error(f"Step failed with status {status}: {message}")
-                return STATUS_OK, "Training completed successfully."
+                return STATUS_OK, "Training failed."
 
         logger.info("Predictor completed successfully.")
         return STATUS_OK, "Training completed successfully."
