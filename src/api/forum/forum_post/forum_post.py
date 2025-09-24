@@ -23,7 +23,7 @@ api_key_header = APIKeyHeader(name=API_KEY_NAME)
 
 
 @router.post(
-    "/posts",
+    "/posts/create",
     summary=summary_forum_post,
     description=description_forum_post,
     response_description=response_description_forum_post,
