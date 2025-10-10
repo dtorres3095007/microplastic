@@ -26,3 +26,22 @@ class MicroplasticZoneQueries:
         query: str = self.insert_microplastic_zone.query
         resp = conn.executemany_insert(query, batch)
         return resp
+
+    @sql_query_reader(base_dir, "microplastic_zones_get_all.sql")
+    def get_all_microplastic_zones(
+        self, limit: int, offset: int, conn: DatabaseConnection
+    ) -> Optional[list]:
+        """
+        Retrieves all microplastic zones from the database.
+
+        Args:
+            limit (int): The maximum number of microplastic zones to retrieve.
+            offset (int): The number of microplastic zones to skip before starting to collect the result set.
+            conn (DatabaseConnection): The database connection object.
+
+        Returns:
+            Optional[list]: A list of microplastic zones, or None if the retrieval failed.
+        """
+        query: str = self.get_all_microplastic_zones.query
+        resp = conn.execute_query(query, {"limit": limit, "offset": offset})
+        return resp

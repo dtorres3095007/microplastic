@@ -48,3 +48,28 @@ class MicroplasticZone:
             "message": "Microplastic zone inserted successfully",
             "status": resp,
         }
+
+    async def get_all_microplastic_zones(
+        self,
+        limit: int,
+        offset: int,
+    ) -> Tuple[int, str]:
+        """
+        Retrieves all microplastic zones from the database.
+
+        Args:
+            limit (int): Maximum number of microplastic zones to return.
+            offset (int): Number of microplastic zones to skip before starting to collect the result set.
+
+        Returns:
+            tuple: A tuple containing the status code and a list of microplastic zones.
+        """
+        resp = self.microplastic_zone_queries.get_all_microplastic_zones(
+            conn=self.conn,
+            limit=limit,
+            offset=offset,
+        )
+        if resp is None:
+            return STATUS_BAD_REQUEST, "Failed to retrieve microplastic zones."
+
+        return STATUS_OK, resp
