@@ -53,6 +53,10 @@ class MicroplasticZone:
         self,
         limit: int,
         offset: int,
+        pred_min: float | None,
+        pred_max: float | None,
+        month: int | None,
+        year: int | None,
     ) -> Tuple[int, str]:
         """
         Retrieves all microplastic zones from the database.
@@ -60,6 +64,10 @@ class MicroplasticZone:
         Args:
             limit (int): Maximum number of microplastic zones to return.
             offset (int): Number of microplastic zones to skip before starting to collect the result set.
+            pred_min (float): Minimum predicted microplastic concentration to filter results.
+            pred_max (float): Maximum predicted microplastic concentration to filter results.
+            month (int): Month to filter results.
+            year (int): Year to filter results.
 
         Returns:
             tuple: A tuple containing the status code and a list of microplastic zones.
@@ -68,6 +76,10 @@ class MicroplasticZone:
             conn=self.conn,
             limit=limit,
             offset=offset,
+            pred_min=pred_min,
+            pred_max=pred_max,
+            month=month,
+            year=year,
         )
         if resp is None:
             return STATUS_BAD_REQUEST, "Failed to retrieve microplastic zones."

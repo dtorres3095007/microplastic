@@ -1,4 +1,4 @@
-from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
+from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST, PRED_FOREST
 from src.entities.machine_learning.src.outputs_db.queries import OutputsDBQueries
 from src.shared.db_config import DatabaseConnection
 from typing import Tuple
@@ -24,30 +24,31 @@ class OutputsDB:
         df = self.read_predictions_csv(file_path)
         batch = []
         for row in df.itertuples(index=False):
-            batch.append(
-                (
-                    int(row.polygon_id),
-                    row.geometry,
-                    float(row.NDVI),
-                    float(row.NDWI),
-                    float(row.NDCI),
-                    float(row.FDI),
-                    float(row.NDPI),
-                    float(row.BLUE),
-                    float(row.GREEN),
-                    float(row.RED),
-                    float(row.REDEDGE1),
-                    float(row.REDEDGE2),
-                    float(row.REDEDGE3),
-                    float(row.NIR_10m),
-                    float(row.NIR_20m),
-                    float(row.SWIR1),
-                    float(row.SWIR2),
-                    float(row.pred_linear),
-                    float(row.pred_forest),
-                    float(row.pred_neural),
+            if float(row.pred_forest) > PRED_FOREST:
+                batch.append(
+                    (
+                        int(row.polygon_id),
+                        row.geometry,
+                        float(row.NDVI),
+                        float(row.NDWI),
+                        float(row.NDCI),
+                        float(row.FDI),
+                        float(row.NDPI),
+                        float(row.BLUE),
+                        float(row.GREEN),
+                        float(row.RED),
+                        float(row.REDEDGE1),
+                        float(row.REDEDGE2),
+                        float(row.REDEDGE3),
+                        float(row.NIR_10m),
+                        float(row.NIR_20m),
+                        float(row.SWIR1),
+                        float(row.SWIR2),
+                        float(row.pred_linear),
+                        float(row.pred_forest),
+                        float(row.pred_neural),
+                    )
                 )
-            )
         resp = self.outputs_db.insert_outputs(batch, self.conn)
         if resp is None:
             return STATUS_BAD_REQUEST, {

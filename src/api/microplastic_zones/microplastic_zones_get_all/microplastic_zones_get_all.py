@@ -44,6 +44,10 @@ async def get_all_microplastic_zones(
         status, message = await microplastic_zone.get_all_microplastic_zones(
             limit=query.limit,
             offset=query.offset,
+            pred_min=query.pred_min,
+            pred_max=query.pred_max,
+            month=query.month,
+            year=query.year,
         )
 
         if status == STATUS_OK:
