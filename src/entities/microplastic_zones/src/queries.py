@@ -36,6 +36,8 @@ class MicroplasticZoneQueries:
         pred_max: float | None,
         month: int | None,
         year: int | None,
+        start: str | None,
+        end: str | None,
         conn: DatabaseConnection,
     ) -> Optional[list]:
         """
@@ -48,6 +50,8 @@ class MicroplasticZoneQueries:
             pred_max (float): Maximum predicted microplastic concentration to filter results.
             month (int): Month to filter results.
             year (int): Year to filter results.
+            start (str): Start date to filter results.
+            end (str): End date to filter results.
             conn (DatabaseConnection): The database connection object.
 
         Returns:
@@ -63,6 +67,8 @@ class MicroplasticZoneQueries:
                 "pred_max": pred_max,
                 "month": month,
                 "year": year,
+                "start": start,
+                "end": end,
             },
         )
         return resp

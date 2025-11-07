@@ -29,4 +29,10 @@ WHERE (
     )
     AND (%(month)s IS NULL OR MONTH(created_at) = %(month)s)
     AND (%(year)s IS NULL OR YEAR(created_at) = %(year)s)
+    AND (
+        (%(start)s IS NULL AND %(end)s IS NULL) OR
+        (%(start)s IS NOT NULL AND %(end)s IS NOT NULL AND created_at BETWEEN %(start)s AND %(end)s) OR
+        (%(start)s IS NOT NULL AND %(end)s IS NULL AND created_at >= %(start)s) OR
+        (%(start)s IS NULL AND %(end)s IS NOT NULL AND created_at <= %(end)s)
+    )
 LIMIT %(limit)s OFFSET %(offset)s;

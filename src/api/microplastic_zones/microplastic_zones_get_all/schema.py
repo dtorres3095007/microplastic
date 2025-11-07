@@ -26,3 +26,7 @@ class MicroplasticZonesQueryParams(BaseModel):
         default=None,
         description="Year to filter results",
     )
+    month_year: str | None = Field(
+        default=None,
+        description="Month and year to filter results, in the format 'mes año'",
+    )

@@ -48,6 +48,7 @@ async def get_all_microplastic_zones(
             pred_max=query.pred_max,
             month=query.month,
             year=query.year,
+            month_year=query.month_year,
         )
 
         if status == STATUS_OK:
