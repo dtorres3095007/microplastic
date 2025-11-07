@@ -6,6 +6,8 @@ from fastapi import UploadFile
 import pandas as pd
 import io
 from src.shared.constants import MONTHS_ES
+from datetime import datetime
+import calendar
 
 
 class MicroplasticZone:
@@ -58,6 +60,7 @@ class MicroplasticZone:
         pred_max: float | None,
         month: int | None,
         year: int | None,
+        month_year: str | None,
     ) -> Tuple[int, str]:
         """
         Retrieves all microplastic zones from the database.
@@ -69,10 +72,12 @@ class MicroplasticZone:
             pred_max (float): Maximum predicted microplastic concentration to filter results.
             month (int): Month to filter results.
             year (int): Year to filter results.
+            month_year (str): Month and year to filter results, in the format 'mes año'.
 
         Returns:
             tuple: A tuple containing the status code and a list of microplastic zones.
         """
+        start, end = self.get_rank_dates(month_year)
         resp = self.microplastic_zone_queries.get_all_microplastic_zones(
             conn=self.conn,
             limit=limit,
@@ -81,6 +86,8 @@ class MicroplasticZone:
             pred_max=pred_max,
             month=month,
             year=year,
+            start=start,
+            end=end,
         )
         if resp is None:
             return STATUS_BAD_REQUEST, "Failed to retrieve microplastic zones."
@@ -105,3 +112,29 @@ class MicroplasticZone:
             row["month_year_label"] = f"{month} {row['year']}"
 
         return STATUS_OK, resp
+
+    def get_rank_dates(self, month_year: str):
+        month_es = {
+            "enero": 1,
+            "febrero": 2,
+            "marzo": 3,
+            "abril": 4,
+            "mayo": 5,
+            "junio": 6,
+            "julio": 7,
+            "agosto": 8,
+            "septiembre": 9,
+            "octubre": 10,
+            "noviembre": 11,
+            "diciembre": 12,
+        }
+
+        parts = month_year.lower().split()
+        month = month_es[parts[0]]
+        year = int(parts[1])
+
+        start = datetime(year, month, 1)
+        last_day = calendar.monthrange(year, month)[1]
+        end = datetime(year, month, last_day, 23, 59, 59)
+
+        return start, end
