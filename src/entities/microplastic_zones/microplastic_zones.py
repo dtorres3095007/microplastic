@@ -85,3 +85,18 @@ class MicroplasticZone:
             return STATUS_BAD_REQUEST, "Failed to retrieve microplastic zones."
 
         return STATUS_OK, resp
+
+    async def get_dates_microplastic_zones(self) -> Tuple[int, str]:
+        """
+        Retrieves available dates for microplastic zones from the database.
+
+        Returns:
+            tuple: A tuple containing the status code and a list of available dates.
+        """
+        resp = self.microplastic_zone_queries.get_dates_microplastic_zones(
+            conn=self.conn,
+        )
+        if resp is None:
+            return STATUS_BAD_REQUEST, "Failed to retrieve microplastic zone dates."
+
+        return STATUS_OK, resp

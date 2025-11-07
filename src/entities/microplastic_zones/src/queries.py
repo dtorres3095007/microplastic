@@ -66,3 +66,23 @@ class MicroplasticZoneQueries:
             },
         )
         return resp
+
+    @sql_query_reader(base_dir, "microplastic_zones_get_dates.sql")
+    def get_dates_microplastic_zones(
+        self,
+        conn: DatabaseConnection,
+    ) -> Optional[list]:
+        """
+        Retrieves available dates for microplastic zones from the database.
+
+        Args:
+            conn (DatabaseConnection): The database connection object.
+
+        Returns:
+            Optional[list]: A list of available dates, or None if the retrieval failed.
+        """
+        query: str = self.get_dates_microplastic_zones.query
+        resp = conn.execute_query(
+            query,
+        )
+        return resp
