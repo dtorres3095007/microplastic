@@ -5,6 +5,7 @@ from typing import Tuple
 from fastapi import UploadFile
 import pandas as pd
 import io
+from src.shared.constants import MONTHS_ES
 
 
 class MicroplasticZone:
@@ -98,5 +99,9 @@ class MicroplasticZone:
         )
         if resp is None:
             return STATUS_BAD_REQUEST, "Failed to retrieve microplastic zone dates."
+
+        for row in resp:
+            month = MONTHS_ES[row["month"] - 1]
+            row["month_year_label"] = f"{month} {row['year']}"
 
         return STATUS_OK, resp

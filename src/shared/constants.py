@@ -274,3 +274,18 @@ MICROPLASTIC_DATA = [
         "microplastic_concentration": 0.47,
     },
 ]
+
+MONTHS_ES = [
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
+]
