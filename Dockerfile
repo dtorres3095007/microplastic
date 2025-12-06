@@ -1,5 +1,5 @@
 # Utiliza la imagen base de Python slim
-FROM python:3.8-slim
+FROM python:3.10-slim
 
 # Instala las dependencias necesarias incluyendo GDAL y otras librerías necesarias para compilar extensiones
 RUN apt-get update && apt-get install -y \
@@ -19,14 +19,15 @@ ENV C_INCLUDE_PATH=/usr/include/gdal
 ENV GDAL_VERSION=3.6.2
 ENV GDAL_CONFIG=/usr/bin/gdal-config
 
+WORKDIR /app
+
 # Actualiza pip y setuptools
-RUN pip install --upgrade pip setuptools wheel
 
 # Copia el archivo requirements.txt y lo instala
 COPY requirements.txt .
+RUN pip install --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
-WORKDIR /app
 COPY . /app
 EXPOSE 3000
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "3000", "--reload"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "3000", "--workers", "4"]
