@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     curl \
     git \
+    cron \
+    supervisor \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -29,5 +31,19 @@ RUN pip install --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app
+
+# ---- AGREGADO PARA CRON ----
+# Copiar cronjob al contenedor
+COPY cronjob /etc/cron.d/predictor-cron
+RUN chmod 0644 /etc/cron.d/predictor-cron
+RUN crontab /etc/cron.d/predictor-cron
+
+# Copiar script que ejecutará el predictor
+COPY run_predictor.sh /app/run_predictor.sh
+RUN chmod +x /app/run_predictor.sh
+
+# ---- AGREGADO PARA SUPERVISOR ----
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 EXPOSE 3000
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "3000", "--workers", "4"]
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
