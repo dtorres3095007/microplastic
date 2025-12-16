@@ -48,16 +48,16 @@ def predictor_request():
         )
 
         for step in [
-            predictor.clean_folders,
+            # predictor.clean_folders,
             predictor.get_polygon_images,
-            predictor.calculate_features,
-            predictor.feature_mean,
-            predictor.bands_means,
-            predictor.create_polygons,
-            predictor.create_dataset,
-            predictor.predict,
-            predictor.show_map,
-            predictor.outputs_db,
+            # predictor.calculate_features,
+            # predictor.feature_mean,
+            # predictor.bands_means,
+            # predictor.create_polygons,
+            # predictor.create_dataset,
+            # predictor.predict,
+            # predictor.show_map,
+            # predictor.outputs_db,
         ]:
             status, message = step()
             if status != STATUS_OK:
