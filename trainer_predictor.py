@@ -49,8 +49,8 @@ def predictor_request():
 
         for step in [
             # predictor.clean_folders,
-            predictor.get_polygon_images,
-            # predictor.calculate_features,
+            # predictor.get_polygon_images,
+            predictor.calculate_features,
             # predictor.feature_mean,
             # predictor.bands_means,
             # predictor.create_polygons,
