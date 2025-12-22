@@ -1,0 +1,16 @@
+# Ignorar datos pesados
+*.SAFE
+*.jp2
+data_trainer/
+images/
+datasets/
+*.tif
+*.csv
+
+# Python
+__pycache__/
+*.pyc
+
+# Git
+.git
+.gitignore
