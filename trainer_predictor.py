@@ -55,9 +55,9 @@ def predictor_request():
             # predictor.bands_means,
             # predictor.create_polygons,
             # predictor.create_dataset,
-            predictor.predict,
+            # predictor.predict,
             # predictor.show_map,
-            # predictor.outputs_db,
+            predictor.outputs_db,
         ]:
             status, message = step()
             if status != STATUS_OK:
