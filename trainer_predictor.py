@@ -54,8 +54,8 @@ def predictor_request():
             # predictor.feature_mean,
             # predictor.bands_means,
             # predictor.create_polygons,
-            predictor.create_dataset,
-            # predictor.predict,
+            # predictor.create_dataset,
+            predictor.predict,
             # predictor.show_map,
             # predictor.outputs_db,
         ]:
