@@ -78,11 +78,10 @@ class Predictor:
         """
         Get the images from the polygon.
         """
-        # status, message = self.integrations.get_images(
-        #     self.polygon, self.initial_date, self.end_date
-        # )
-        # logger.info(f"Images downloaded : {message} - {status}")
-        status = 200
+        status, message = self.integrations.get_images(
+            self.polygon, self.initial_date, self.end_date
+        )
+        logger.info(f"Images downloaded : {message} - {status}")
         if status != STATUS_OK:
             logger.error(f"Error in get_images: {message}")
             return status, message
