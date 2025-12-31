@@ -181,6 +181,20 @@ class MediaCollections:
 
         media_url = None
         thumbnail_url = None
+        print(
+            "params: ",
+            media_id,
+            title,
+            summary,
+            content,
+            media_type,
+            file_content,
+            original_filename,
+            thumbnail_content,
+            thumbnail_filename,
+            published_at,
+            status,
+        )
 
         if file_content and original_filename:
             self._delete_file_by_url(media[0].get("media_url"))
@@ -191,6 +205,8 @@ class MediaCollections:
             thumbnail_url = self._save_file(thumbnail_content, thumbnail_filename)
         elif not thumbnail_content and not thumbnail_filename:
             self._delete_file_by_url(media[0].get("thumbnail_url"))
+
+        print("media_url:", media_url, "thumbnail_url:", thumbnail_url)
 
         updated = self.media_queries.update_media(
             media_id=media_id,
