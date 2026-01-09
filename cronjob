@@ -1,1 +1,1 @@
-50 23 9 * * /app/run_predictor.sh
+30 13 9 * * /app/run_predictor.sh
