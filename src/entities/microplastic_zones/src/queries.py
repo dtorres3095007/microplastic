@@ -32,12 +32,12 @@ class MicroplasticZoneQueries:
         self,
         limit: int,
         offset: int,
-        pred_min: float | None,
-        pred_max: float | None,
-        month: int | None,
-        year: int | None,
-        start: str | None,
-        end: str | None,
+        pred_min: Optional[float],
+        pred_max: Optional[float],
+        month: Optional[int],
+        year: Optional[int],
+        start: Optional[str],
+        end: Optional[str],
         conn: DatabaseConnection,
     ) -> Optional[list]:
         """
