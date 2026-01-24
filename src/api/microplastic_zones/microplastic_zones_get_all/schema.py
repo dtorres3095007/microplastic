@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import Optional
 
 
 class MicroplasticZonesQueryParams(BaseModel):
@@ -10,23 +11,23 @@ class MicroplasticZonesQueryParams(BaseModel):
         ge=0,
         description="Number of microplastic zones to skip before starting to collect the result set",
     )
-    pred_min: float | None = Field(
+    pred_min: Optional[float] = Field(
         default=None,
         description="Minimum predicted microplastic concentration to filter results",
     )
-    pred_max: float | None = Field(
+    pred_max: Optional[float] = Field(
         default=None,
         description="Maximum predicted microplastic concentration to filter results",
     )
-    month: int | None = Field(
+    month: Optional[int] = Field(
         default=None,
         description="Month to filter results",
     )
-    year: int | None = Field(
+    year: Optional[int] = Field(
         default=None,
         description="Year to filter results",
     )
-    month_year: str | None = Field(
+    month_year: Optional[str] = Field(
         default=None,
         description="Month and year to filter results, in the format 'mes año'",
     )

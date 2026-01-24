@@ -1,7 +1,7 @@
 from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST
 from src.entities.microplastic_zones.src.queries import MicroplasticZoneQueries
 from src.shared.db_config import DatabaseConnection
-from typing import Tuple
+from typing import Tuple, Optional
 from fastapi import UploadFile
 import pandas as pd
 import io
@@ -56,11 +56,11 @@ class MicroplasticZone:
         self,
         limit: int,
         offset: int,
-        pred_min: float | None,
-        pred_max: float | None,
-        month: int | None,
-        year: int | None,
-        month_year: str | None,
+        pred_min: Optional[float],
+        pred_max: Optional[float],
+        month: Optional[int],
+        year: Optional[int],
+        month_year: Optional[str],
     ) -> Tuple[int, str]:
         """
         Retrieves all microplastic zones from the database.
