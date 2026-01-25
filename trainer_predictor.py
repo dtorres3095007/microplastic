@@ -7,12 +7,14 @@ from datetime import datetime, timedelta
 
 def get_month_date_range():
     """Return first and last date of the current month in YYYY-MM-DD format."""
-    today = datetime(2025, 12, 31)
+    # today = datetime.today()
 
-    first_day = today.replace(day=1).strftime("%Y-%m-%d")
+    # first_day = today.replace(day=1).strftime("%Y-%m-%d")
+    first_day = "2025-12-20"
 
-    next_month = today.replace(day=28) + timedelta(days=4)
-    last_day = (next_month.replace(day=1) - timedelta(days=1)).strftime("%Y-%m-%d")
+    # next_month = today.replace(day=28) + timedelta(days=4)
+    # last_day = (next_month.replace(day=1) - timedelta(days=1)).strftime("%Y-%m-%d")
+    last_day = "2025-12-25"
 
     return first_day, last_day
 
