@@ -1,19 +1,11 @@
 # ===============================
 # DATASETS / SATELLITE DATA
 # ===============================
-data_predictor/
-data_predictor/**
-data_predictor/processed/
-data_predictor/processed/**
-
 data_trainer/
 data_trainer/**
 
 images/
 images/**
-
-datasets/
-datasets/**
 
 *.SAFE
 *.SAFE/**
