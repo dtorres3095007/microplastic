@@ -455,6 +455,7 @@ class Predictor:
             *FOLDERS_DATASET_NAMES["MAIN"], FOLDERS_DATASET_NAMES["MODELS"]
         )
         model = Models(dataset_path, models_path)
+        print("Variable model: ", model)
         status, message = model.load_data()
 
         if status != STATUS_OK:
