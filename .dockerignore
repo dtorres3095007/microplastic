@@ -1,9 +1,6 @@
 # ===============================
 # DATASETS / SATELLITE DATA
 # ===============================
-data_trainer/
-data_trainer/**
-
 images/
 images/**
 
