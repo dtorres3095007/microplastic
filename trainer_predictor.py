@@ -10,11 +10,11 @@ def get_month_date_range():
     # today = datetime.today()
 
     # first_day = today.replace(day=1).strftime("%Y-%m-%d")
-    first_day = "2025-12-20"
+    first_day = "2025-12-01"
 
     # next_month = today.replace(day=28) + timedelta(days=4)
     # last_day = (next_month.replace(day=1) - timedelta(days=1)).strftime("%Y-%m-%d")
-    last_day = "2025-12-25"
+    last_day = "2025-12-31"
 
     return first_day, last_day
 
@@ -50,13 +50,13 @@ def predictor_request():
         )
 
         for step in [
-            # predictor.clean_folders,
-            # predictor.get_polygon_images,
-            # predictor.calculate_features,
-            # predictor.feature_mean,
-            # predictor.bands_means,
-            # predictor.create_polygons,
-            # predictor.create_dataset,
+            predictor.clean_folders,
+            predictor.get_polygon_images,
+            predictor.calculate_features,
+            predictor.feature_mean,
+            predictor.bands_means,
+            predictor.create_polygons,
+            predictor.create_dataset,
             predictor.predict,
             predictor.outputs_db,
         ]:

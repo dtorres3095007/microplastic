@@ -1,8 +1,5 @@
 # Utiliza la imagen base de Python slim
-FROM python:3.10-slim
-
-# Evitar prompts interactivos
-ENV DEBIAN_FRONTEND=noninteractive
+FROM python:3.8-slim
 
 # Instala las dependencias necesarias incluyendo GDAL y otras librerías necesarias para compilar extensiones
 RUN apt-get update && apt-get install -y \
@@ -10,12 +7,9 @@ RUN apt-get update && apt-get install -y \
     libgdal-dev \
     build-essential \
     python3-dev \
+    python3-pip \
     curl \
     git \
-    cron \
-    supervisor \
-    tzdata \
-    procps \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -25,6 +19,7 @@ ENV TZ=America/Bogota
 # Establece las variables de entorno necesarias para GDAL
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
+ENV GDAL_VERSION=3.6.2
 ENV GDAL_CONFIG=/usr/bin/gdal-config
 
 # Directorio de trabajo
@@ -38,19 +33,6 @@ RUN pip install --upgrade pip setuptools wheel && \
 # Copiar código fuente
 COPY . /app
 
-# ---------- CRON ----------
-# Copiar cronjob (DEBE terminar con línea en blanco)
-COPY cronjob /etc/cron.d/predictor-cron
-RUN chmod 0644 /etc/cron.d/predictor-cron && \
-    crontab /etc/cron.d/predictor-cron
-
-# Script ejecutable del predictor
-COPY run_predictor.sh /app/run_predictor.sh
-RUN chmod +x /app/run_predictor.sh
-
-# ---- AGREGADO PARA SUPERVISOR ----
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
 EXPOSE 3000
 # Iniciar Supervisor (FastAPI + cron)
-CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "3000", "--reload"]
