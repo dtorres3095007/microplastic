@@ -1,9 +1,25 @@
 from src.shared.constants import STATUS_OK, STATUS_BAD_REQUEST, PRED_FOREST
 from src.entities.machine_learning.src.outputs_db.queries import OutputsDBQueries
 from src.shared.db_config import DatabaseConnection
-from typing import Tuple
+from typing import Tuple, Union
+from datetime import datetime, date
 import pandas as pd
 import io
+
+
+def _to_datetime(created_at: Union[str, datetime, date]) -> datetime:
+    """Convierte la fecha pasada a datetime para guardar en created_at."""
+    if isinstance(created_at, datetime):
+        return created_at
+    if isinstance(created_at, date) and not isinstance(created_at, datetime):
+        return datetime.combine(created_at, datetime.min.time())
+    if isinstance(created_at, str):
+        # Acepta "YYYY-MM-DD" o "YYYY-MM-DD HH:MM:SS"
+        created_at = created_at.strip()
+        if len(created_at) <= 10:
+            return datetime.strptime(created_at, "%Y-%m-%d")
+        return datetime.strptime(created_at[:19], "%Y-%m-%d %H:%M:%S")
+    raise TypeError("created_at debe ser str, date o datetime")
 
 
 class OutputsDB:
@@ -11,16 +27,20 @@ class OutputsDB:
         self.outputs_db = OutputsDBQueries()
         self.conn = DatabaseConnection()
 
-    def insert_outputs(self, file_path: str) -> Tuple[int, str]:
+    def insert_outputs(
+        self, file_path: str, created_at: Union[str, datetime, date]
+    ) -> Tuple[int, str]:
         """
         Inserts a new output into the database.
 
         Args:
-            file (str): The path to the file containing output data.
+            file_path: Ruta del CSV con las predicciones.
+            created_at: Fecha a guardar en created_at (str 'YYYY-MM-DD', date o datetime).
 
         Returns:
-            tuple: A tuple containing the status code and a message.
+            tuple: (código de estado, mensaje).
         """
+        created_at_dt = _to_datetime(created_at)
         df = self.read_predictions_csv(file_path)
         batch = []
         for row in df.itertuples(index=False):
@@ -47,6 +67,7 @@ class OutputsDB:
                         float(row.pred_linear),
                         float(row.pred_forest),
                         float(row.pred_neural),
+                        created_at_dt,
                     )
                 )
         resp = self.outputs_db.insert_outputs(batch, self.conn)

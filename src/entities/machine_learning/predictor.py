@@ -554,7 +554,7 @@ class Predictor:
                 FILE_DATASET_WITH_PREDICTIONS,
             )
 
-            status, message = outputs_db.insert_outputs(output_path)
+            status, message = outputs_db.insert_outputs(output_path, self.end_date)
             if status != STATUS_OK:
                 logger.error(f"Error inserting outputs: {message}")
                 return STATUS_BAD_REQUEST, {"message": str(message)}

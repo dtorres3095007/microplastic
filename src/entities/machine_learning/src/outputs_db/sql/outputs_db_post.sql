@@ -18,12 +18,14 @@ INSERT INTO microplastic_zones (
     SWIR2,
     pred_linear,
     pred_forest,
-    pred_neural
+    pred_neural,
+    created_at
 ) VALUES (
     %s,
     ST_GeomFromText(%s, 4326),
     %s, %s, %s, %s, %s,
     %s, %s, %s, %s, %s,
     %s, %s, %s, %s, %s,
-    %s, %s, %s
+    %s, %s, %s,
+    %s
 );
